@@ -123,7 +123,6 @@ namespace CustomMapMarkers
 
         [NonSerialized] public bool IsDeleted = false;
         [NonSerialized] public bool IsBeingDeleted = false;
-        [NonSerialized] private static uint MarkerNumber = 1;
 
         public ModMapMarker(Vector3 position)
         {

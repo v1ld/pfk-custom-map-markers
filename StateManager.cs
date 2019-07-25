@@ -38,35 +38,67 @@ namespace CustomMapMarkers
         }
 
         public static SavedState CurrentState;
-        private static string SavedStateFile = "custom-map-markers.bin";
+        private static string SavedStateFile = "custom-map-markers-state";
 
         public static void LoadState()
         {
             string stateFile = Path.Combine(ApplicationPaths.persistentDataPath, SavedStateFile);
-            if (File.Exists(stateFile) && new FileInfo(stateFile).Length > 0)
+            if (File.Exists(stateFile))
             {
-                using (FileStream fs = new FileStream(stateFile, FileMode.Open))
+                try
                 {
-                    BinaryFormatter formatter = new BinaryFormatter();
-                    CurrentState = (SavedState) formatter.Deserialize(fs);
-                    fs.Close();
+                    using (FileStream fs = new FileStream(stateFile, FileMode.Open))
+                    {
+                        BinaryFormatter formatter = new BinaryFormatter();
+                        CurrentState = (SavedState)formatter.Deserialize(fs);
+                        fs.Close();
+                        return;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"Failed to load state: {e}");
+                    // Move the unreadable state file somewhere safe for now
+                    if (File.Exists(stateFile))
+                    {
+                        string tempFileName = $"{SavedStateFile}-unreadable-{Path.GetRandomFileName()}";
+                        string newStateFile = Path.Combine(ApplicationPaths.persistentDataPath, tempFileName);
+                        File.Move(stateFile, newStateFile);
+                        Log.Write($"Moved unreadable state file to {tempFileName}");
+                    }
                 }
             }
-            else
-            {
-                CurrentState = new SavedState();
-            }
+
+            // Must have a valid state at all times.
+            // This catches both first use and load errors.
+            CurrentState = new SavedState();
         }
 
         public static void SaveState()
         {
-            string stateFile = Path.Combine(ApplicationPaths.persistentDataPath, SavedStateFile);
-            using (FileStream writer = new FileStream(stateFile, FileMode.Create))
+            string tempFileName = $"{SavedStateFile}-{Path.GetRandomFileName()}";
+            string newStateFile = Path.Combine(ApplicationPaths.persistentDataPath, tempFileName);
+            try
             {
-                var savedState = CurrentState.CleanCopyForSave();
-                BinaryFormatter formatter = new BinaryFormatter();
-                formatter.Serialize(writer, savedState);
-                writer.Close();
+                using (FileStream writer = new FileStream(newStateFile, FileMode.Create))
+                {
+                    var savedState = CurrentState.CleanCopyForSave();
+                    BinaryFormatter formatter = new BinaryFormatter();
+                    formatter.Serialize(writer, savedState);
+                    writer.Close();
+
+                    string originalStateFile = Path.Combine(ApplicationPaths.persistentDataPath, SavedStateFile);
+                    File.Delete(originalStateFile);
+                    File.Move(newStateFile, originalStateFile);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Failed to SaveState: {e}");
+                if (File.Exists(newStateFile))
+                {
+                    File.Delete(newStateFile);
+                }
             }
         }
     }
