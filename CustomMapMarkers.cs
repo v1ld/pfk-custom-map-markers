@@ -97,11 +97,11 @@ namespace CustomMapMarkers
         private static Vector3 GetPositionFromEvent(LocalMap map, PointerEventData eventData)
         {
             Vector2 vector2;
-			RectTransformUtility.ScreenPointToLocalPointInRectangle(map.Image.rectTransform, eventData.position, Game.Instance.UI.UICamera, out vector2);
-			vector2 += Vector2.Scale(map.Image.rectTransform.sizeDelta, map.Image.rectTransform.pivot);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(map.Image.rectTransform, eventData.position, Game.Instance.UI.UICamera, out vector2);
+            vector2 += Vector2.Scale(map.Image.rectTransform.sizeDelta, map.Image.rectTransform.pivot);
             LocalMapRenderer.DrawResult drawResult = Helpers.GetField<LocalMapRenderer.DrawResult>(map, "m_DrawResult");
-			Vector2 vector21 = new Vector2(vector2.x / (float)drawResult.ColorRT.width, vector2.y / (float)drawResult.ColorRT.height);
-			Vector3 worldPoint = LocalMapRenderer.Instance.ViewportToWorldPoint(vector21);
+            Vector2 vector21 = new Vector2(vector2.x / (float)drawResult.ColorRT.width, vector2.y / (float)drawResult.ColorRT.height);
+            Vector3 worldPoint = LocalMapRenderer.Instance.ViewportToWorldPoint(vector21);
             return worldPoint;
         }
 
