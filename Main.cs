@@ -48,7 +48,7 @@ namespace CustomMapMarkers
 			    {
                     if (IsShiftPressed)
                     {
-                        CustomMapMarkers.CreateMark(__instance, eventData);
+                        CustomMapMarkers.CreateMarker(__instance, eventData);
                     }
                 }
 

@@ -16,23 +16,23 @@ namespace CustomMapMarkers
         public class SavedState
         {
             public readonly uint Version = 1;   // Data version for serialization
-            public Dictionary<string, List<ModMapMark>> AreaMarks { get; private set; }
+            public Dictionary<string, List<ModMapMarker>> AreaMarkers { get; private set; }
             public uint MarkerNumber = 1;       // Used in creating marker names
 
             public SavedState()
             {
-                AreaMarks = new Dictionary<string, List<ModMapMark>>();
+                AreaMarkers = new Dictionary<string, List<ModMapMarker>>();
             }
 
-            public SavedState(Dictionary<string, List<ModMapMark>> marks)
+            public SavedState(Dictionary<string, List<ModMapMarker>> markers)
             {
-                AreaMarks = marks;
+                AreaMarkers = markers;
             }
 
             public SavedState CleanCopyForSave()
             {
                 var clone = (SavedState)this.MemberwiseClone();
-                clone.AreaMarks = StateHelpers.PurgeDeletedMarks(this.AreaMarks);
+                clone.AreaMarkers = StateHelpers.PurgeDeletedMarkers(this.AreaMarkers);
                 return clone;
             }
         }
@@ -73,25 +73,25 @@ namespace CustomMapMarkers
 
     class StateHelpers
     {
-        public static Dictionary<string, List<ModMapMark>> PurgeDeletedMarks(Dictionary<string, List<ModMapMark>> oldMarks)
+        public static Dictionary<string, List<ModMapMarker>> PurgeDeletedMarkers(Dictionary<string, List<ModMapMarker>> oldMarkers)
         {
-            Dictionary<string, List<ModMapMark>> newMarks = new Dictionary<string, List<ModMapMark>>();
-            foreach (var area in oldMarks.Keys)
+            Dictionary<string, List<ModMapMarker>> newMarkers = new Dictionary<string, List<ModMapMarker>>();
+            foreach (var area in oldMarkers.Keys)
             {
-                if (oldMarks[area].Any(mark => mark.IsDeleted))
+                if (oldMarkers[area].Any(marker => marker.IsDeleted))
                 {
-                    List<ModMapMark> marks = oldMarks[area].FindAll(mark => !mark.IsDeleted);
-                    if (marks.Count() > 0)
+                    List<ModMapMarker> markers = oldMarkers[area].FindAll(marker => !marker.IsDeleted);
+                    if (markers.Count() > 0)
                     {
-                        newMarks[area] = marks;
+                        newMarkers[area] = markers;
                     }
                 }
                 else
                 {
-                    newMarks[area] = oldMarks[area];
+                    newMarkers[area] = oldMarkers[area];
                 }
             }
-            return newMarks;
+            return newMarkers;
         }
     }
 }

@@ -18,7 +18,7 @@ namespace CustomMapMarkers
 {
     class CustomMapMarkers : ISceneHandler, IWarningNotificationUIHandler
     {
-        private static Dictionary<string, List<ModMapMark>> AreaMarks { get { return StateManager.CurrentState.AreaMarks; } }
+        private static Dictionary<string, List<ModMapMarker>> AreaMarkers { get { return StateManager.CurrentState.AreaMarkers; } }
         private static bool IsFirstTimeLocalMapShown = false;
 
         internal static void Load()
@@ -30,29 +30,29 @@ namespace CustomMapMarkers
         internal static void FirstTimeShowLocalMap()
         {
             if (IsFirstTimeLocalMapShown) { return; }
-            AddMarkstoLocalMap();
+            AddMarkerstoLocalMap();
             IsFirstTimeLocalMapShown = true;
         }
 
         private static FastInvoke LocalMap_Set = Helpers.CreateInvoker<LocalMap>("Set");
 
-        public static void CreateMark(LocalMap map, PointerEventData eventData)
+        public static void CreateMarker(LocalMap map, PointerEventData eventData)
         {
-            ModMapMark mark = NewMark(map, eventData);
-            LocalMap.Markers.Add(mark);
+            ModMapMarker marker = NewMarker(map, eventData);
+            LocalMap.Markers.Add(marker);
             LocalMap_Set(map);  // Force a refresh to display the new mark
             Game.Instance.UI.Common.UISound.Play(UISoundType.ButtonClick);
         }
 
-        private static ModMapMark NewMark(LocalMap map, PointerEventData eventData)
+        private static ModMapMarker NewMarker(LocalMap map, PointerEventData eventData)
         {
             string areaName = Game.Instance.CurrentlyLoadedArea.AreaDisplayName;
-            List <ModMapMark> marksForArea;
-            if (!AreaMarks.TryGetValue(areaName, out marksForArea)) { AreaMarks[areaName] = new List<ModMapMark>(); }
+            List <ModMapMarker> markersForArea;
+            if (!AreaMarkers.TryGetValue(areaName, out markersForArea)) { AreaMarkers[areaName] = new List<ModMapMarker>(); }
             Vector3 position = GetPositionFromEvent(map, eventData);
-            ModMapMark mark = new ModMapMark(position);
-            AreaMarks[areaName].Add(mark);
-            return mark;
+            ModMapMarker marker = new ModMapMarker(position);
+            AreaMarkers[areaName].Add(marker);
+            return marker;
         }
 
         private static Vector3 GetPositionFromEvent(LocalMap map, PointerEventData eventData)
@@ -66,36 +66,36 @@ namespace CustomMapMarkers
             return worldPoint;
         }
 
-        internal static void AddMarkstoLocalMap()
+        internal static void AddMarkerstoLocalMap()
         {
             string areaName = Game.Instance.CurrentlyLoadedArea.AreaDisplayName;
-            List<ModMapMark> marks;
-            if (AreaMarks.TryGetValue(areaName, out marks)) {
-                foreach (var mark in marks)
+            List<ModMapMarker> markers;
+            if (AreaMarkers.TryGetValue(areaName, out markers)) {
+                foreach (var marker in markers)
                 {
-                    LocalMap.Markers.Add(mark);
+                    LocalMap.Markers.Add(marker);
                 }
             }
         }
 
-        internal static void RemoveMarksFromLocalMap()
+        internal static void RemoveMarkersFromLocalMap()
         {
             string areaName = Game.Instance.CurrentlyLoadedArea.AreaDisplayName;
-            foreach (var mark in AreaMarks[areaName])
+            foreach (var marker in AreaMarkers[areaName])
             {
-                LocalMap.Markers.Remove(mark);
+                LocalMap.Markers.Remove(marker);
             }
         }
 
         void ISceneHandler.OnAreaDidLoad()
         {
-            AddMarkstoLocalMap();
+            AddMarkerstoLocalMap();
         }
 
         void ISceneHandler.OnAreaBeginUnloading()
         {
             StateManager.SaveState();
-            RemoveMarksFromLocalMap();
+            RemoveMarkersFromLocalMap();
         }
 
         void IWarningNotificationUIHandler.HandleWarning(WarningNotificationType warningType, bool addToLog)
@@ -114,7 +114,7 @@ namespace CustomMapMarkers
     }
 
     [Serializable]
-    class ModMapMark :  ILocalMapMarker
+    class ModMapMarker :  ILocalMapMarker
 	{
         public string Description { get; set; }
         private SerializableVector3 Position;
@@ -125,7 +125,7 @@ namespace CustomMapMarkers
         [NonSerialized] public bool IsBeingDeleted = false;
         [NonSerialized] private static uint MarkerNumber = 1;
 
-        public ModMapMark(Vector3 position)
+        public ModMapMarker(Vector3 position)
         {
             Description = $"Custom marker #{StateManager.CurrentState.MarkerNumber++}";
             Position = position;
@@ -146,19 +146,19 @@ namespace CustomMapMarkers
     }
 
     class CustomMapMarkersMenu {
-        private static Dictionary<string, List<ModMapMark>> AreaMarks { get { return StateManager.CurrentState.AreaMarks; } }
+        private static Dictionary<string, List<ModMapMarker>> AreaMarkers { get { return StateManager.CurrentState.AreaMarkers; } }
         internal static int lastAreaMenu = 0;
 
         internal static void Layout()
         {
             var fixedWidth = new GUILayoutOption[1] { GUILayout.ExpandWidth(false) };
-            if (AreaMarks.Count == 0)
+            if (AreaMarkers.Count == 0)
             {
                 GUILayout.Label("<b>No custom markers.</b>", fixedWidth);
                 return;
             }
 
-            string[] areaNames = AreaMarks.Keys.ToArray();
+            string[] areaNames = AreaMarkers.Keys.ToArray();
             Array.Sort(areaNames);
 
             GUILayout.Label("<b>Select area</b>", fixedWidth);
@@ -174,46 +174,46 @@ namespace CustomMapMarkers
             var fixedWidth = new GUILayoutOption[1] { GUILayout.ExpandWidth(false) };
 
             uint i = 1;
-            foreach (var mark in AreaMarks[areaName])
+            foreach (var marker in AreaMarkers[areaName])
             {
-                if (mark.IsDeleted) { continue; }
+                if (marker.IsDeleted) { continue; }
 
                 GUILayout.Space(10f);
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(mark.IsVisible ? $"<b>{i++}: {mark.Description}</b>" : $"{i++}: {mark.Description}", fixedWidth);
-                if (GUILayout.Button(mark.IsVisible ? "Hide" : "Show", fixedWidth))
+                GUILayout.Label(marker.IsVisible ? $"<b>{i++}: {marker.Description}</b>" : $"{i++}: {marker.Description}", fixedWidth);
+                if (GUILayout.Button(marker.IsVisible ? "Hide" : "Show", fixedWidth))
                 {
-                    mark.IsVisible = !mark.IsVisible;
+                    marker.IsVisible = !marker.IsVisible;
                 }
-                if (!mark.IsBeingDeleted && GUILayout.Button("Delete", fixedWidth))
+                if (!marker.IsBeingDeleted && GUILayout.Button("Delete", fixedWidth))
                 {
-                    mark.IsBeingDeleted = true;
+                    marker.IsBeingDeleted = true;
                 }
-                if (mark.IsBeingDeleted)
+                if (marker.IsBeingDeleted)
                 {
                     GUILayout.Label("Are you sure?", fixedWidth);
                     if (GUILayout.Button("Yes", fixedWidth))
                     {
-                        LocalMap.Markers.Remove(mark);
-                        mark.IsDeleted = true;
-                        mark.IsVisible = false;
+                        LocalMap.Markers.Remove(marker);
+                        marker.IsDeleted = true;
+                        marker.IsVisible = false;
                     }
                     if (GUILayout.Button("No", fixedWidth))
                     {
-                        mark.IsBeingDeleted = false;
+                        marker.IsBeingDeleted = false;
                     }
                 }
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Description: ", fixedWidth);
-                mark.Description = GUILayout.TextField(mark.Description, GUILayout.MaxWidth(250f));
+                marker.Description = GUILayout.TextField(marker.Description, GUILayout.MaxWidth(250f));
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Type: ", fixedWidth);
-                int typeIndex = GUILayout.SelectionGrid(mark.Type == LocalMap.MarkType.Poi ? 0 : 1, types, types.Length, fixedWidth);
-                mark.Type = typeIndex == 0 ? LocalMap.MarkType.Poi : LocalMap.MarkType.VeryImportantThing;
+                int typeIndex = GUILayout.SelectionGrid(marker.Type == LocalMap.MarkType.Poi ? 0 : 1, types, types.Length, fixedWidth);
+                marker.Type = typeIndex == 0 ? LocalMap.MarkType.Poi : LocalMap.MarkType.VeryImportantThing;
                 GUILayout.EndHorizontal();
             }
         }
