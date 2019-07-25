@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using Kingmaker;
 using Kingmaker.PubSubSystem;
@@ -21,9 +22,10 @@ namespace CustomMapMarkers
     class CustomMapMarkers : ISceneHandler
     {
         public static Dictionary<string, List<ModMapMark>> AllMarks { get; private set; }
-        private static bool IsInitialized = false;
+        internal static bool IsInitialized = false;
         private static string MapMarkersFile = "custom-map-markers.bin";
         internal static uint markerNumber = 1;
+        internal static int lastAreaMenu = 0;
 
         internal static void Load()
         {
@@ -59,7 +61,7 @@ namespace CustomMapMarkers
             }
         }
 
-        private static void SaveToFile()
+        internal static void SaveToFile()
         {
             string markerFile = Path.Combine(ApplicationPaths.persistentDataPath, MapMarkersFile);
             using (FileStream writer = new FileStream(markerFile, FileMode.Create))
@@ -129,6 +131,42 @@ namespace CustomMapMarkers
         void ISceneHandler.OnAreaBeginUnloading()
         {
             RemoveMarksFromLocalMap();
+        }
+
+        internal static void AreaMenu()
+        {
+            string[] areaNames = AllMarks.Keys.ToArray();
+            Array.Sort(areaNames);
+
+            var fixedWidth = new GUILayoutOption[1] { GUILayout.ExpandWidth(false) };
+            GUILayout.Space(10f);
+            GUILayout.Label("<b>Markers by Area</b>", fixedWidth);
+            lastAreaMenu = GUILayout.SelectionGrid(lastAreaMenu, areaNames, 10, fixedWidth);
+            GUILayout.Label($"<b>Markers for {areaNames[lastAreaMenu]}:</b>", fixedWidth);
+            MarkersInAreaMenu(areaNames[lastAreaMenu]);
+        }
+
+        private static void MarkersInAreaMenu(string areaName)
+        {
+            string[] types = { "Point of Interest", "Very Important Thing" };
+            var fixedWidth = new GUILayoutOption[1] { GUILayout.ExpandWidth(false) };
+
+            uint i = 1;
+            foreach (var mark in AllMarks[areaName])
+            {
+                GUILayout.Space(10f);
+                GUILayout.Label($"<b>{i++}: {mark.Description}</b>", fixedWidth);
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Description: ", fixedWidth);
+                mark.Description = GUILayout.TextField(mark.Description, GUILayout.MaxWidth(250f));
+                GUILayout.EndHorizontal();
+                
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Type: ", fixedWidth);
+                int typeIndex = GUILayout.SelectionGrid(mark.Type == LocalMap.MarkType.Poi ? 0 : 1, types, types.Length, fixedWidth);
+                mark.Type = typeIndex == 0 ? LocalMap.MarkType.Poi : LocalMap.MarkType.VeryImportantThing;
+                GUILayout.EndHorizontal();
+            }
         }
   }
 

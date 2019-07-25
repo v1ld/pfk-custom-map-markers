@@ -264,27 +264,27 @@ namespace CustomMapMarkers
                 }
                 GUILayout.EndVertical();
             }
+            if (!CustomMapMarkers.IsInitialized)
+            {
+                GUILayout.BeginVertical();
+                GUILayout.Label("<b>Load into the game and bring up the map at least once to see options.</b>", fixedWidth);
+                GUILayout.EndVertical();
+                return;
+            }
 #if DEBUG
             GUILayout.BeginVertical();
             GUILayout.Label("<b>DEBUGging enabled.</b>", fixedWidth);
             GUILayout.EndVertical();
 #endif
 
+#if false
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Remove area effects key: ", GUILayout.ExpandWidth(false));
-            SetKeyBinding(ref settings.RemoveAreaEffectKey);
+            GUILayout.Toggle(settings.SaveAfterEveryChange, "Save after every mark added or changed", fixedWidth);
             GUILayout.EndHorizontal();
+#endif
 
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Remove area effects mode: ", GUILayout.ExpandWidth(false));
-            bool waitMode    = GUILayout.Toggle(!settings.DismissInsteadOfWait, "Wait until expired", fixedWidth);
-            bool dismissMode = GUILayout.Toggle(!waitMode, "Dismiss immediately", fixedWidth);
-            settings.DismissInsteadOfWait = dismissMode;
-            GUILayout.EndHorizontal();
-
-            GUI.enabled = !settings.DismissInsteadOfWait;
-            settings.WaitingIgnoresFatigue = GUILayout.Toggle(settings.WaitingIgnoresFatigue, "Waiting mode doesn't cause fatigue", fixedWidth);
-            GUI.enabled = true;
+            CustomMapMarkers.AreaMenu();
+            CustomMapMarkers.SaveToFile();
         }
 
         public static void SetKeyBinding(ref KeyCode keyCode)
@@ -303,6 +303,7 @@ namespace CustomMapMarkers
         static void OnSaveGUI(UnityModManager.ModEntry modEntry)
         {
             settings.Save(modEntry);
+            CustomMapMarkers.SaveToFile();
         }
 
         internal static void SafeLoad(Action load, String name)
@@ -342,9 +343,7 @@ namespace CustomMapMarkers
 
     public class Settings : UnityModManager.ModSettings
     {
-        public bool DismissInsteadOfWait = false;
-        public bool WaitingIgnoresFatigue = false;
-        public KeyCode RemoveAreaEffectKey = KeyCode.L;
+        public bool SaveAfterEveryChange = false;
 
         public override void Save(UnityModManager.ModEntry modEntry)
         {
