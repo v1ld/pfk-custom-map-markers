@@ -18,7 +18,7 @@ namespace CustomMapMarkers
 {
     class CustomMapMarkers : ISceneHandler, IWarningNotificationUIHandler
     {
-        private static Dictionary<string, List<ModMapMark>> AllMarks { get { return StateManager.AllMarks; } }
+        private static Dictionary<string, List<ModMapMark>> AreaMarks { get { return StateManager.CurrentState.AreaMarks; } }
         private static bool IsFirstTimeLocalMapShown = false;
 
         internal static void Load()
@@ -48,10 +48,10 @@ namespace CustomMapMarkers
         {
             string areaName = Game.Instance.CurrentlyLoadedArea.AreaDisplayName;
             List <ModMapMark> marksForArea;
-            if (!AllMarks.TryGetValue(areaName, out marksForArea)) { AllMarks[areaName] = new List<ModMapMark>(); }
+            if (!AreaMarks.TryGetValue(areaName, out marksForArea)) { AreaMarks[areaName] = new List<ModMapMark>(); }
             Vector3 position = GetPositionFromEvent(map, eventData);
             ModMapMark mark = new ModMapMark(position);
-            AllMarks[areaName].Add(mark);
+            AreaMarks[areaName].Add(mark);
             return mark;
         }
 
@@ -70,7 +70,7 @@ namespace CustomMapMarkers
         {
             string areaName = Game.Instance.CurrentlyLoadedArea.AreaDisplayName;
             List<ModMapMark> marks;
-            if (AllMarks.TryGetValue(areaName, out marks)) {
+            if (AreaMarks.TryGetValue(areaName, out marks)) {
                 foreach (var mark in marks)
                 {
                     LocalMap.Markers.Add(mark);
@@ -81,7 +81,7 @@ namespace CustomMapMarkers
         internal static void RemoveMarksFromLocalMap()
         {
             string areaName = Game.Instance.CurrentlyLoadedArea.AreaDisplayName;
-            foreach (var mark in AllMarks[areaName])
+            foreach (var mark in AreaMarks[areaName])
             {
                 LocalMap.Markers.Remove(mark);
             }
@@ -127,7 +127,7 @@ namespace CustomMapMarkers
 
         public ModMapMark(Vector3 position)
         {
-            Description = $"Custom marker #{MarkerNumber++}";
+            Description = $"Custom marker #{StateManager.CurrentState.MarkerNumber++}";
             Position = position;
             Type = LocalMap.MarkType.Poi;
         }
@@ -146,19 +146,19 @@ namespace CustomMapMarkers
     }
 
     class CustomMapMarkersMenu {
-        private static Dictionary<string, List<ModMapMark>> AllMarks { get { return StateManager.AllMarks; } }
+        private static Dictionary<string, List<ModMapMark>> AreaMarks { get { return StateManager.CurrentState.AreaMarks; } }
         internal static int lastAreaMenu = 0;
 
         internal static void Layout()
         {
             var fixedWidth = new GUILayoutOption[1] { GUILayout.ExpandWidth(false) };
-            if (AllMarks.Count == 0)
+            if (AreaMarks.Count == 0)
             {
                 GUILayout.Label("<b>No custom markers.</b>", fixedWidth);
                 return;
             }
 
-            string[] areaNames = AllMarks.Keys.ToArray();
+            string[] areaNames = AreaMarks.Keys.ToArray();
             Array.Sort(areaNames);
 
             GUILayout.Label("<b>Select area</b>", fixedWidth);
@@ -174,7 +174,7 @@ namespace CustomMapMarkers
             var fixedWidth = new GUILayoutOption[1] { GUILayout.ExpandWidth(false) };
 
             uint i = 1;
-            foreach (var mark in AllMarks[areaName])
+            foreach (var mark in AreaMarks[areaName])
             {
                 if (mark.IsDeleted) { continue; }
 

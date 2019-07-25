@@ -12,7 +12,32 @@ namespace CustomMapMarkers
 {
     class StateManager
     {
-        public static Dictionary<string, List<ModMapMark>> AllMarks { get; private set; }
+        [Serializable]
+        public class SavedState
+        {
+            public readonly uint Version = 1;   // Data version for serialization
+            public Dictionary<string, List<ModMapMark>> AreaMarks { get; private set; }
+            public uint MarkerNumber = 1;       // Used in creating marker names
+
+            public SavedState()
+            {
+                AreaMarks = new Dictionary<string, List<ModMapMark>>();
+            }
+
+            public SavedState(Dictionary<string, List<ModMapMark>> marks)
+            {
+                AreaMarks = marks;
+            }
+
+            public SavedState CleanCopyForSave()
+            {
+                var clone = (SavedState)this.MemberwiseClone();
+                clone.AreaMarks = StateHelpers.PurgeDeletedMarks(this.AreaMarks);
+                return clone;
+            }
+        }
+
+        public static SavedState CurrentState;
         private static string SavedStateFile = "custom-map-markers.bin";
 
         public static void LoadState()
@@ -23,14 +48,13 @@ namespace CustomMapMarkers
                 using (FileStream fs = new FileStream(stateFile, FileMode.Open))
                 {
                     BinaryFormatter formatter = new BinaryFormatter();
-                    var loadedMarks = (Dictionary<string, List<ModMapMark>>) formatter.Deserialize(fs);
-                    AllMarks = PurgeDeleted(loadedMarks);
+                    CurrentState = (SavedState) formatter.Deserialize(fs);
                     fs.Close();
                 }
             }
             else
             {
-                AllMarks = new Dictionary<string, List<ModMapMark>>();
+                CurrentState = new SavedState();
             }
         }
 
@@ -39,14 +63,17 @@ namespace CustomMapMarkers
             string stateFile = Path.Combine(ApplicationPaths.persistentDataPath, SavedStateFile);
             using (FileStream writer = new FileStream(stateFile, FileMode.Create))
             {
-                Dictionary<string, List<ModMapMark>> savedMarks = PurgeDeleted(AllMarks);
+                var savedState = CurrentState.CleanCopyForSave();
                 BinaryFormatter formatter = new BinaryFormatter();
-                formatter.Serialize(writer, savedMarks);
+                formatter.Serialize(writer, savedState);
                 writer.Close();
             }
         }
+    }
 
-        private static Dictionary<string, List<ModMapMark>> PurgeDeleted(Dictionary<string, List<ModMapMark>> oldMarks)
+    class StateHelpers
+    {
+        public static Dictionary<string, List<ModMapMark>> PurgeDeletedMarks(Dictionary<string, List<ModMapMark>> oldMarks)
         {
             Dictionary<string, List<ModMapMark>> newMarks = new Dictionary<string, List<ModMapMark>>();
             foreach (var area in oldMarks.Keys)
