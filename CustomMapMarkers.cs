@@ -4,14 +4,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
 using Kingmaker;
 using Kingmaker.PubSubSystem;
 using Kingmaker.UI;
 using Kingmaker.UI.ServiceWindow.LocalMap;
-using Kingmaker.Utility;
 using Kingmaker.Visual.LocalMap;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -19,57 +16,22 @@ using UnityEngine.EventSystems;
 
 namespace CustomMapMarkers
 {
-    class CustomMapMarkers : ISceneHandler
+    class CustomMapMarkers : ISceneHandler, IWarningNotificationUIHandler
     {
-        public static Dictionary<string, List<ModMapMark>> AllMarks { get; private set; }
-        internal static bool IsInitialized = false;
-        private static string MapMarkersFile = "custom-map-markers.bin";
-        internal static uint markerNumber = 1;
-        internal static int lastAreaMenu = 0;
+        private static Dictionary<string, List<ModMapMark>> AllMarks { get { return StateManager.AllMarks; } }
+        private static bool IsFirstTimeLocalMapShown = false;
 
         internal static void Load()
         {
             EventBus.Subscribe(new CustomMapMarkers());
+            StateManager.LoadState();
         }
 
-        internal static void Initialize()
+        internal static void FirstTimeShowLocalMap()
         {
-            if (IsInitialized) { return; }
-            LoadFromFile(true);
-            IsInitialized = true;
-        }
-
-        private static void LoadFromFile(bool addMarkstoMap)
-        {
-            string markerFile = Path.Combine(ApplicationPaths.persistentDataPath, MapMarkersFile);
-            if (File.Exists(markerFile))
-            {
-                using (FileStream fs = new FileStream(markerFile, FileMode.Open))
-                {
-                    BinaryFormatter formatter = new BinaryFormatter();
-                    AllMarks = (Dictionary<string, List<ModMapMark>>) formatter.Deserialize(fs);
-                    fs.Close();
-                    if (addMarkstoMap)
-                    {
-                        AddMarkstoLocalMap();
-                    }
-                }
-            }
-            else
-            {
-                AllMarks = new Dictionary<string, List<ModMapMark>>();
-            }
-        }
-
-        internal static void SaveToFile()
-        {
-            string markerFile = Path.Combine(ApplicationPaths.persistentDataPath, MapMarkersFile);
-            using (FileStream writer = new FileStream(markerFile, FileMode.Create))
-            {
-                BinaryFormatter formatter = new BinaryFormatter();
-                formatter.Serialize(writer, AllMarks);
-                writer.Close();
-            }
+            if (IsFirstTimeLocalMapShown) { return; }
+            AddMarkstoLocalMap();
+            IsFirstTimeLocalMapShown = true;
         }
 
         private static FastInvoke LocalMap_Set = Helpers.CreateInvoker<LocalMap>("Set");
@@ -80,7 +42,6 @@ namespace CustomMapMarkers
             LocalMap.Markers.Add(mark);
             LocalMap_Set(map);  // Force a refresh to display the new mark
             Game.Instance.UI.Common.UISound.Play(UISoundType.ButtonClick);
-            SaveToFile();
         }
 
         private static ModMapMark NewMark(LocalMap map, PointerEventData eventData)
@@ -108,9 +69,12 @@ namespace CustomMapMarkers
         internal static void AddMarkstoLocalMap()
         {
             string areaName = Game.Instance.CurrentlyLoadedArea.AreaDisplayName;
-            foreach (var mark in AllMarks[areaName])
-            {
-                LocalMap.Markers.Add(mark);
+            List<ModMapMark> marks;
+            if (AllMarks.TryGetValue(areaName, out marks)) {
+                foreach (var mark in marks)
+                {
+                    LocalMap.Markers.Add(mark);
+                }
             }
         }
 
@@ -130,56 +94,40 @@ namespace CustomMapMarkers
 
         void ISceneHandler.OnAreaBeginUnloading()
         {
+            StateManager.SaveState();
             RemoveMarksFromLocalMap();
         }
 
-        internal static void AreaMenu()
+        void IWarningNotificationUIHandler.HandleWarning(WarningNotificationType warningType, bool addToLog)
         {
-            string[] areaNames = AllMarks.Keys.ToArray();
-            Array.Sort(areaNames);
-
-            var fixedWidth = new GUILayoutOption[1] { GUILayout.ExpandWidth(false) };
-            GUILayout.Space(10f);
-            GUILayout.Label("<b>Markers by Area</b>", fixedWidth);
-            lastAreaMenu = GUILayout.SelectionGrid(lastAreaMenu, areaNames, 10, fixedWidth);
-            GUILayout.Label($"<b>Markers for {areaNames[lastAreaMenu]}:</b>", fixedWidth);
-            MarkersInAreaMenu(areaNames[lastAreaMenu]);
-        }
-
-        private static void MarkersInAreaMenu(string areaName)
-        {
-            string[] types = { "Point of Interest", "Very Important Thing" };
-            var fixedWidth = new GUILayoutOption[1] { GUILayout.ExpandWidth(false) };
-
-            uint i = 1;
-            foreach (var mark in AllMarks[areaName])
+            switch (warningType)
             {
-                GUILayout.Space(10f);
-                GUILayout.Label($"<b>{i++}: {mark.Description}</b>", fixedWidth);
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Description: ", fixedWidth);
-                mark.Description = GUILayout.TextField(mark.Description, GUILayout.MaxWidth(250f));
-                GUILayout.EndHorizontal();
-                
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Type: ", fixedWidth);
-                int typeIndex = GUILayout.SelectionGrid(mark.Type == LocalMap.MarkType.Poi ? 0 : 1, types, types.Length, fixedWidth);
-                mark.Type = typeIndex == 0 ? LocalMap.MarkType.Poi : LocalMap.MarkType.VeryImportantThing;
-                GUILayout.EndHorizontal();
+                case WarningNotificationType.GameSaved:
+                case WarningNotificationType.GameSavedAuto:
+                case WarningNotificationType.GameSavedQuick:
+                    StateManager.SaveState();
+                    break;
             }
         }
-  }
 
-    [Serializable()]
+        void IWarningNotificationUIHandler.HandleWarning(string text, bool addToLog) { }
+    }
+
+    [Serializable]
     class ModMapMark :  ILocalMapMarker
 	{
         public string Description { get; set; }
         private SerializableVector3 Position;
         public LocalMap.MarkType Type { get; set; }
+        public bool IsVisible { get; set; } = true;
+
+        [NonSerialized] public bool IsDeleted = false;
+        [NonSerialized] public bool IsBeingDeleted = false;
+        [NonSerialized] private static uint MarkerNumber = 1;
 
         public ModMapMark(Vector3 position)
         {
-            Description = $"Custom marker #{CustomMapMarkers.markerNumber++}";
+            Description = $"Custom marker #{MarkerNumber++}";
             Position = position;
             Type = LocalMap.MarkType.Poi;
         }
@@ -194,6 +142,80 @@ namespace CustomMapMarkers
             => Position;
 
         bool ILocalMapMarker.IsVisible()
-            => true;
+            => IsVisible;
+    }
+
+    class CustomMapMarkersMenu {
+        private static Dictionary<string, List<ModMapMark>> AllMarks { get { return StateManager.AllMarks; } }
+        internal static int lastAreaMenu = 0;
+
+        internal static void Layout()
+        {
+            var fixedWidth = new GUILayoutOption[1] { GUILayout.ExpandWidth(false) };
+            if (AllMarks.Count == 0)
+            {
+                GUILayout.Label("<b>No custom markers.</b>", fixedWidth);
+                return;
+            }
+
+            string[] areaNames = AllMarks.Keys.ToArray();
+            Array.Sort(areaNames);
+
+            GUILayout.Label("<b>Select area</b>", fixedWidth);
+            lastAreaMenu = GUILayout.SelectionGrid(lastAreaMenu, areaNames, 10, fixedWidth);
+            GUILayout.Space(10f);
+            GUILayout.Label($"<b>{areaNames[lastAreaMenu]}</b>", fixedWidth);
+            LayoutMarkersForArea(areaNames[lastAreaMenu]);
+        }
+
+        private static void LayoutMarkersForArea(string areaName)
+        {
+            string[] types = { "Point of Interest", "Very Important Thing" };
+            var fixedWidth = new GUILayoutOption[1] { GUILayout.ExpandWidth(false) };
+
+            uint i = 1;
+            foreach (var mark in AllMarks[areaName])
+            {
+                if (mark.IsDeleted) { continue; }
+
+                GUILayout.Space(10f);
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(mark.IsVisible ? $"<b>{i++}: {mark.Description}</b>" : $"{i++}: {mark.Description}", fixedWidth);
+                if (GUILayout.Button(mark.IsVisible ? "Hide" : "Show", fixedWidth))
+                {
+                    mark.IsVisible = !mark.IsVisible;
+                }
+                if (!mark.IsBeingDeleted && GUILayout.Button("Delete", fixedWidth))
+                {
+                    mark.IsBeingDeleted = true;
+                }
+                if (mark.IsBeingDeleted)
+                {
+                    GUILayout.Label("Are you sure?", fixedWidth);
+                    if (GUILayout.Button("Yes", fixedWidth))
+                    {
+                        LocalMap.Markers.Remove(mark);
+                        mark.IsDeleted = true;
+                        mark.IsVisible = false;
+                    }
+                    if (GUILayout.Button("No", fixedWidth))
+                    {
+                        mark.IsBeingDeleted = false;
+                    }
+                }
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Description: ", fixedWidth);
+                mark.Description = GUILayout.TextField(mark.Description, GUILayout.MaxWidth(250f));
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Type: ", fixedWidth);
+                int typeIndex = GUILayout.SelectionGrid(mark.Type == LocalMap.MarkType.Poi ? 0 : 1, types, types.Length, fixedWidth);
+                mark.Type = typeIndex == 0 ? LocalMap.MarkType.Poi : LocalMap.MarkType.VeryImportantThing;
+                GUILayout.EndHorizontal();
+            }
+        }
     }
 }

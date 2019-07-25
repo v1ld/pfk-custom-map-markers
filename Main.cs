@@ -64,7 +64,7 @@ namespace CustomMapMarkers
             {
                 IsLocalMapActive = true;
                 // LocalMap.Markers is loaded late, run a one time setup on first map show
-                CustomMapMarkers.Initialize();
+                CustomMapMarkers.FirstTimeShowLocalMap();
                 return true;
             }
         }
@@ -264,46 +264,20 @@ namespace CustomMapMarkers
                 }
                 GUILayout.EndVertical();
             }
-            if (!CustomMapMarkers.IsInitialized)
-            {
-                GUILayout.BeginVertical();
-                GUILayout.Label("<b>Load into the game and bring up the map at least once to see options.</b>", fixedWidth);
-                GUILayout.EndVertical();
-                return;
-            }
 #if DEBUG
             GUILayout.BeginVertical();
-            GUILayout.Label("<b>DEBUGging enabled.</b>", fixedWidth);
+            GUILayout.Label("<b>DEBUG build!</b>", fixedWidth);
+            GUILayout.Space(10f);
             GUILayout.EndVertical();
 #endif
 
-#if false
-            GUILayout.BeginHorizontal();
-            GUILayout.Toggle(settings.SaveAfterEveryChange, "Save after every mark added or changed", fixedWidth);
-            GUILayout.EndHorizontal();
-#endif
-
-            CustomMapMarkers.AreaMenu();
-            CustomMapMarkers.SaveToFile();
-        }
-
-        public static void SetKeyBinding(ref KeyCode keyCode)
-        {
-            string label = (keyCode == KeyCode.None) ? "Press a key" : keyCode.ToString();
-            if (GUILayout.Button(label, GUILayout.ExpandWidth(false)))
-            {
-                keyCode = KeyCode.None;
-            }
-            if (keyCode == KeyCode.None && Event.current != null && Event.current.isKey)
-            {
-                keyCode = Event.current.keyCode;
-            }
+            CustomMapMarkersMenu.Layout();
         }
 
         static void OnSaveGUI(UnityModManager.ModEntry modEntry)
         {
             settings.Save(modEntry);
-            CustomMapMarkers.SaveToFile();
+            StateManager.SaveState();
         }
 
         internal static void SafeLoad(Action load, String name)
