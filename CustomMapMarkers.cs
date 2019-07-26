@@ -152,6 +152,8 @@ namespace CustomMapMarkers
     class CustomMapMarkersMenu {
         private static Dictionary<string, List<ModMapMarker>> AreaMarkers { get { return StateManager.CurrentState.AreaMarkers; } }
         internal static int lastAreaMenu = 0;
+        private static string[] MarkTypeNames = { "Point of Interest", "Very Important Thing", "Loot", "Exit" };
+        private static LocalMap.MarkType[] MarkTypes = { LocalMap.MarkType.Poi, LocalMap.MarkType.VeryImportantThing, LocalMap.MarkType.Loot, LocalMap.MarkType.Exit };
 
         internal static void Layout()
         {
@@ -174,17 +176,36 @@ namespace CustomMapMarkers
 
         private static void LayoutMarkersForArea(string areaName)
         {
-            string[] types = { "Point of Interest", "Very Important Thing" };
             var fixedWidth = new GUILayoutOption[1] { GUILayout.ExpandWidth(false) };
 
-            uint i = 1;
+            uint markerNumber = 1;
             foreach (var marker in AreaMarkers[areaName])
             {
                 if (marker.IsDeleted) { continue; }
 
                 GUILayout.Space(10f);
+
+                string markerLabel = $"{markerNumber++}: {marker.Description}";
+                if (marker.IsVisible) { markerLabel = $"<color=#1aff1a><b>{markerLabel}</b></color>"; }
+                GUILayout.Label(markerLabel, fixedWidth);
+
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(marker.IsVisible ? $"<b>{i++}: {marker.Description}</b>" : $"{i++}: {marker.Description}", fixedWidth);
+                GUILayout.Label("Description: ", fixedWidth);
+                marker.Description = GUILayout.TextField(marker.Description, GUILayout.MaxWidth(250f));
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Type: ", fixedWidth);
+                for (int i = 0; i < MarkTypeNames.Length; i++)
+                {
+                    if (GUILayout.Toggle(marker.Type == MarkTypes[i], MarkTypeNames[i], fixedWidth))
+                    {
+                        marker.Type = MarkTypes[i];
+                    }
+                }
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
                 if (GUILayout.Button(marker.IsVisible ? "Hide" : "Show", fixedWidth))
                 {
                     marker.IsVisible = !marker.IsVisible;
@@ -207,17 +228,6 @@ namespace CustomMapMarkers
                         marker.IsBeingDeleted = false;
                     }
                 }
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Description: ", fixedWidth);
-                marker.Description = GUILayout.TextField(marker.Description, GUILayout.MaxWidth(250f));
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Type: ", fixedWidth);
-                int typeIndex = GUILayout.SelectionGrid(marker.Type == LocalMap.MarkType.Poi ? 0 : 1, types, types.Length, fixedWidth);
-                marker.Type = typeIndex == 0 ? LocalMap.MarkType.Poi : LocalMap.MarkType.VeryImportantThing;
                 GUILayout.EndHorizontal();
             }
         }
