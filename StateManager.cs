@@ -42,11 +42,10 @@ namespace CustomMapMarkers
         }
 
         public static SavedState CurrentState;
-        private static string SavedStateFile = "custom-map-markers-state.json";
 
         public static void LoadState()
         {
-            string stateFile = Path.Combine(ApplicationPaths.persistentDataPath, SavedStateFile);
+            string stateFile = Path.Combine(ApplicationPaths.persistentDataPath, GetStateFileName());
             if (File.Exists(stateFile))
             {
                 try
@@ -65,7 +64,7 @@ namespace CustomMapMarkers
                     // Move the unreadable state file somewhere safe for now
                     if (File.Exists(stateFile))
                     {
-                        string tempFileName = $"{SavedStateFile}-unreadable-{Path.GetRandomFileName()}";
+                        string tempFileName = GetStateFileName("-unreadable-" + Path.GetRandomFileName());
                         string newStateFile = Path.Combine(ApplicationPaths.persistentDataPath, tempFileName);
                         File.Move(stateFile, newStateFile);
                         Log.Write($"Moved unreadable state file to {tempFileName}");
@@ -80,7 +79,7 @@ namespace CustomMapMarkers
 
         public static void SaveState()
         {
-            string tempFileName = $"{SavedStateFile}-{Path.GetRandomFileName()}";
+            string tempFileName = GetStateFileName("-new-" + Path.GetRandomFileName());
             string newStateFile = Path.Combine(ApplicationPaths.persistentDataPath, tempFileName);
             try
             {
@@ -91,7 +90,7 @@ namespace CustomMapMarkers
                     serializer.WriteObject(writer, savedState);
                     writer.Close();
 
-                    string originalStateFile = Path.Combine(ApplicationPaths.persistentDataPath, SavedStateFile);
+                    string originalStateFile = Path.Combine(ApplicationPaths.persistentDataPath, GetStateFileName());
                     File.Delete(originalStateFile);
                     File.Move(newStateFile, originalStateFile);
                 }
@@ -104,6 +103,14 @@ namespace CustomMapMarkers
                     File.Delete(newStateFile);
                 }
             }
+        }
+
+        private static string StateFilenameBase = "custom-map-markers-state";
+        private static string StateFilenameExt = ".json";
+
+        private static string GetStateFileName(string suffix = "")
+        {
+            return StateFilenameBase + suffix + StateFilenameExt;
         }
     }
 
