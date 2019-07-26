@@ -5,19 +5,23 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Json;
 using Kingmaker.Utility;
 
 namespace CustomMapMarkers
 {
     class StateManager
     {
-        [Serializable]
+        [DataContract]
         public class SavedState
         {
+            [DataMember(Order=1)]
             public readonly uint Version = 1;   // Data version for serialization
-            public Dictionary<string, List<ModMapMarker>> AreaMarkers { get; private set; }
+            [DataMember(Order=2)]
             public uint MarkerNumber = 1;       // Used in creating marker names
+            [DataMember(Order=100)]
+            public Dictionary<string, List<ModMapMarker>> AreaMarkers { get; private set; }
 
             public SavedState()
             {
@@ -38,7 +42,7 @@ namespace CustomMapMarkers
         }
 
         public static SavedState CurrentState;
-        private static string SavedStateFile = "custom-map-markers-state";
+        private static string SavedStateFile = "custom-map-markers-state.json";
 
         public static void LoadState()
         {
@@ -49,8 +53,8 @@ namespace CustomMapMarkers
                 {
                     using (FileStream fs = new FileStream(stateFile, FileMode.Open))
                     {
-                        BinaryFormatter formatter = new BinaryFormatter();
-                        CurrentState = (SavedState)formatter.Deserialize(fs);
+                        DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(SavedState));
+                        CurrentState = (SavedState)serializer.ReadObject(fs);
                         fs.Close();
                         return;
                     }
@@ -83,8 +87,8 @@ namespace CustomMapMarkers
                 using (FileStream writer = new FileStream(newStateFile, FileMode.Create))
                 {
                     var savedState = CurrentState.CleanCopyForSave();
-                    BinaryFormatter formatter = new BinaryFormatter();
-                    formatter.Serialize(writer, savedState);
+                    DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(SavedState));
+                    serializer.WriteObject(writer, savedState);
                     writer.Close();
 
                     string originalStateFile = Path.Combine(ApplicationPaths.persistentDataPath, SavedStateFile);

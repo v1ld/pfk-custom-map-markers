@@ -1,16 +1,20 @@
 // By Cherno, from http://answers.unity.com/answers/956580/view.html
 
-using UnityEngine;
 using System;
+using System.Runtime.Serialization;
+using UnityEngine;
 
 /// Since unity doesn't flag the Vector3 as serializable, we
 /// need to create our own version. This one will automatically convert
 /// between Vector3 and SerializableVector3
-[System.Serializable]
+[DataContract]
 public struct SerializableVector3
 {
+    [DataMember]
     public float x;
+    [DataMember]
     public float y;
+    [DataMember]
     public float z;
 
     public SerializableVector3(float rX, float rY, float rZ)

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using Kingmaker;
 using Kingmaker.PubSubSystem;
 using Kingmaker.UI;
@@ -113,16 +114,20 @@ namespace CustomMapMarkers
         void IWarningNotificationUIHandler.HandleWarning(string text, bool addToLog) { }
     }
 
-    [Serializable]
+    [DataContract]
     class ModMapMarker :  ILocalMapMarker
 	{
+        [DataMember]
         public string Description { get; set; }
+        [DataMember]
         private SerializableVector3 Position;
+        [DataMember]
         public LocalMap.MarkType Type { get; set; }
+        [DataMember]
         public bool IsVisible { get; set; } = true;
 
-        [NonSerialized] public bool IsDeleted = false;
-        [NonSerialized] public bool IsBeingDeleted = false;
+        public bool IsDeleted = false;
+        public bool IsBeingDeleted = false;
 
         public ModMapMarker(Vector3 position)
         {
