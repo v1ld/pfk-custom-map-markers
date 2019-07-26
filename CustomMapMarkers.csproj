@@ -16,11 +16,13 @@
   <PropertyGroup>
     <PostBuildEvent>
     xcopy /y "$(SolutionDir)\bin\$(Configuration)\$(TargetFramework)\CustomMapMarkers.dll" "C:\Games\Steam\steamapps\common\Pathfinder Kingmaker\Mods\CustomMapMarkers\"
+    xcopy /y "$(SolutionDir)\bin\$(Configuration)\$(TargetFramework)\protobuf-net.dll" "C:\Games\Steam\steamapps\common\Pathfinder Kingmaker\Mods\CustomMapMarkers\"
     xcopy /y "$(SolutionDir)\Info.json" "C:\Games\Steam\steamapps\common\Pathfinder Kingmaker\Mods\CustomMapMarkers\"
     </PostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="protobuf-net" Version="2.4.0"/>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="0Harmony12">

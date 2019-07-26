@@ -7,17 +7,21 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using Kingmaker.Utility;
+using ProtoBuf;
 
 namespace CustomMapMarkers
 {
     class StateManager
     {
-        [Serializable]
+        [ProtoContract]
         public class SavedState
         {
+            [ProtoMember(1)]
             public readonly uint Version = 1;   // Data version for serialization
-            public Dictionary<string, List<ModMapMarker>> AreaMarkers { get; private set; }
+            [ProtoMember(2)]
             public uint MarkerNumber = 1;       // Used in creating marker names
+            [ProtoMember(128)]
+            public Dictionary<string, List<ModMapMarker>> AreaMarkers { get; private set; }
 
             public SavedState()
             {
@@ -38,7 +42,7 @@ namespace CustomMapMarkers
         }
 
         public static SavedState CurrentState;
-        private static string SavedStateFile = "custom-map-markers-state";
+        private static string SavedStateFile = "custom-map-markers-state.bin";
 
         public static void LoadState()
         {
@@ -49,9 +53,7 @@ namespace CustomMapMarkers
                 {
                     using (FileStream fs = new FileStream(stateFile, FileMode.Open))
                     {
-                        BinaryFormatter formatter = new BinaryFormatter();
-                        CurrentState = (SavedState)formatter.Deserialize(fs);
-                        fs.Close();
+                        CurrentState = Serializer.Deserialize<SavedState>(fs);
                         return;
                     }
                 }
@@ -83,9 +85,8 @@ namespace CustomMapMarkers
                 using (FileStream writer = new FileStream(newStateFile, FileMode.Create))
                 {
                     var savedState = CurrentState.CleanCopyForSave();
-                    BinaryFormatter formatter = new BinaryFormatter();
-                    formatter.Serialize(writer, savedState);
-                    writer.Close();
+                    Serializer.Serialize<SavedState>(writer, savedState);
+                    writer.Close();     // Must Close() before the File.Move() below
 
                     string originalStateFile = Path.Combine(ApplicationPaths.persistentDataPath, SavedStateFile);
                     File.Delete(originalStateFile);

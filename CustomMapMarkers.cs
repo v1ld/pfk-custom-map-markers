@@ -10,6 +10,7 @@ using Kingmaker.PubSubSystem;
 using Kingmaker.UI;
 using Kingmaker.UI.ServiceWindow.LocalMap;
 using Kingmaker.Visual.LocalMap;
+using ProtoBuf;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -113,12 +114,16 @@ namespace CustomMapMarkers
         void IWarningNotificationUIHandler.HandleWarning(string text, bool addToLog) { }
     }
 
-    [Serializable]
+    [ProtoContract]
     class ModMapMarker :  ILocalMapMarker
 	{
+        [ProtoMember(1)]
         public string Description { get; set; }
-        private SerializableVector3 Position;
+        [ProtoMember(2)]
+        private SerializableVector3 Position { get; set; }
+        [ProtoMember(3)]
         public LocalMap.MarkType Type { get; set; }
+        [ProtoMember(4)]
         public bool IsVisible { get; set; } = true;
 
         [NonSerialized] public bool IsDeleted = false;
@@ -129,6 +134,10 @@ namespace CustomMapMarkers
             Description = $"Custom marker #{StateManager.CurrentState.MarkerNumber++}";
             Position = position;
             Type = LocalMap.MarkType.Poi;
+        }
+
+        public ModMapMarker()
+        {
         }
 
         string ILocalMapMarker.GetDescription()
