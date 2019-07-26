@@ -1,4 +1,5 @@
-﻿// Copyright (c) 2019 Jennifer Messerly
+﻿// Copyright (c) 2019 v1ld.git@gmail.com
+// Copyright (c) 2019 Jennifer Messerly
 // This code is licensed under MIT license (see LICENSE for details)
 
 using System;
@@ -45,7 +46,7 @@ namespace CustomMapMarkers
             private static bool Prefix(LocalMap __instance, PointerEventData eventData)
             {
                 if (eventData.button == PointerEventData.InputButton.Left)
-			    {
+                {
                     if (IsShiftPressed)
                     {
                         CustomMapMarkers.CreateMarker(__instance, eventData);

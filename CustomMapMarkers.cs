@@ -1,5 +1,4 @@
 // Copyright (c) 2019 v1ld.git@gmail.com
-// Copyright (c) 2019 Jennifer Messerly
 // This code is licensed under MIT license (see LICENSE for details)
 
 using System;
@@ -20,7 +19,7 @@ namespace CustomMapMarkers
     class CustomMapMarkers : ISceneHandler, IWarningNotificationUIHandler
     {
         private static Dictionary<string, List<ModMapMarker>> AreaMarkers { get { return StateManager.CurrentState.AreaMarkers; } }
-        private static bool IsFirstTimeLocalMapShown = false;
+        private static bool HasRunOnce = false;
 
         internal static void Load()
         {
@@ -30,9 +29,9 @@ namespace CustomMapMarkers
 
         internal static void FirstTimeShowLocalMap()
         {
-            if (IsFirstTimeLocalMapShown) { return; }
+            if (HasRunOnce) { return; }
             AddMarkerstoLocalMap();
-            IsFirstTimeLocalMapShown = true;
+            HasRunOnce = true;
         }
 
         private static FastInvoke LocalMap_Set = Helpers.CreateInvoker<LocalMap>("Set");
@@ -71,7 +70,8 @@ namespace CustomMapMarkers
         {
             string areaName = Game.Instance.CurrentlyLoadedArea.AreaDisplayName;
             List<ModMapMarker> markers;
-            if (AreaMarkers.TryGetValue(areaName, out markers)) {
+            if (AreaMarkers.TryGetValue(areaName, out markers))
+            {
                 foreach (var marker in markers)
                 {
                     LocalMap.Markers.Add(marker);
@@ -82,9 +82,13 @@ namespace CustomMapMarkers
         internal static void RemoveMarkersFromLocalMap()
         {
             string areaName = Game.Instance.CurrentlyLoadedArea.AreaDisplayName;
-            foreach (var marker in AreaMarkers[areaName])
+            List<ModMapMarker> markers;
+            if (AreaMarkers.TryGetValue(areaName, out markers))
             {
-                LocalMap.Markers.Remove(marker);
+                foreach (var marker in markers)
+                {
+                    LocalMap.Markers.Remove(marker);
+                }
             }
         }
 
