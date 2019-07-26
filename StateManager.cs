@@ -50,11 +50,11 @@ namespace CustomMapMarkers
             {
                 try
                 {
-                    using (FileStream fs = new FileStream(stateFile, FileMode.Open))
+                    using (FileStream reader = new FileStream(stateFile, FileMode.Open))
                     {
                         DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(SavedState));
-                        CurrentState = (SavedState)serializer.ReadObject(fs);
-                        fs.Close();
+                        CurrentState = (SavedState)serializer.ReadObject(reader);
+                        reader.Close();
                         return;
                     }
                 }
@@ -88,7 +88,7 @@ namespace CustomMapMarkers
                     var savedState = CurrentState.CleanCopyForSave();
                     DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(SavedState));
                     serializer.WriteObject(writer, savedState);
-                    writer.Close();
+                    writer.Close();     // must explicitly Close() before File.Move()
 
                     string originalStateFile = Path.Combine(ApplicationPaths.persistentDataPath, GetStateFileName());
                     File.Delete(originalStateFile);
