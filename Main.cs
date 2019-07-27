@@ -93,6 +93,15 @@ namespace CustomMapMarkers
             }
         }
 
+        [Harmony12.HarmonyPatch(typeof(GlobalMapLocation), "HandleHoverChange")]
+        internal static class GlobalMapLocation_HandleHoverChange_Patch
+        {
+            private static void Postfix(GlobalMapLocation __instance, bool isHover)
+            {
+                CustomGlobalMapLocations.PostHandleHoverchange(__instance, isHover);
+            }
+        }
+
         [Harmony12.HarmonyPatch(typeof(BlueprintLocation), "GetDescription")]
         internal static class BlueprintLocation_GetDescription_Patch
         {
@@ -258,6 +267,10 @@ namespace CustomMapMarkers
             if (!ApplyPatch(typeof(GlobalMapLocation_HandleClick_Patch), "Global map location click"))
             {
                 throw Error("Failed to patch GlobalMapLocation.HandleClick(), cannot load mod");
+            }
+            if (!ApplyPatch(typeof(GlobalMapLocation_HandleHoverChange_Patch), "Global map hover change"))
+            {
+                throw Error("Failed to patch GlobalMapLocation.HandleHoverChange(), cannot load mod");
             }
             if (!ApplyPatch(typeof(BlueprintLocation_GetDescription_Patch), "Blueprint location description"))
             {

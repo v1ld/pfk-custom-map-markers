@@ -1,6 +1,7 @@
 // Copyright (c) 2019 v1ld.git@gmail.com
 // This code is licensed under MIT license (see LICENSE for details)
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -49,6 +50,14 @@ namespace CustomMapMarkers
                 StateManager.SaveState();
             }
         }
+
+        internal static void PostHandleHoverchange(GlobalMapLocation location, bool isHover)
+        {
+            if (!isHover)
+            {
+                ModGlobalMapLocation.FindByAssetGuid(location.Blueprint.AssetGuid)?.UpdateGlobalMapLocation();
+            }
+        }
     }
 
     [DataContract]
@@ -77,7 +86,7 @@ namespace CustomMapMarkers
             this.mapLocation         = location;
             this.AssetGuid           = location.Blueprint.AssetGuid;
             this.originalDescription = location.Blueprint.Description;
-            this.originalColor       = location.CurrentColor;
+            this.originalColor       = location.HoverColor;
 
             this.Description = $"Custom Global Map Location #{StateManager.CurrentState.MarkerNumber++}";
             this.CurrentColor = Color.green;
@@ -103,6 +112,9 @@ namespace CustomMapMarkers
             }
             return modLocation;
         }
+
+        public static ModGlobalMapLocation FindByAssetGuid(string assetGuid)
+            => GlobalMapLocations.FirstOrDefault(location => location.AssetGuid == assetGuid);
 
         internal static string GetModifiedDescription(BlueprintLocation bpLocation, string result)
         {
@@ -132,10 +144,12 @@ namespace CustomMapMarkers
             }
 
             GlobalMapLocation location = this.mapLocation;
-            location.CurrentColor = this.CurrentColor;
             location.HoverColor   = this.CurrentColor;
-            location.SelectColor  = this.CurrentColor;
             location.OverrideHCol = true;
+
+            // Don't have a direct way to set a highlight color on the map icon,
+            // so fake it by marking customized locations as being hovered.
+            Helpers.SetField(location, "m_Hover", true);
 
             location.UpdateHighlight();
             return true;
