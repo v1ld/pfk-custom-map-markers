@@ -10,6 +10,9 @@ using System.Reflection;
 using Kingmaker;
 using Kingmaker.Blueprints;
 using Kingmaker.Blueprints.Root.Strings.GameLog;
+using Kingmaker.GameModes;
+using Kingmaker.Globalmap;
+using Kingmaker.Globalmap.Blueprints;
 using Kingmaker.PubSubSystem;
 using Kingmaker.UI.ServiceWindow.LocalMap;
 using Kingmaker.Utility;
@@ -30,7 +33,7 @@ namespace CustomMapMarkers
                 if (Main.library != null) return;
                 Main.library = self;
 
-                EnableGameLogging();
+                //EnableGameLogging();
 
 #if DEBUG
                 // Perform extra sanity checks in debug builds.
@@ -76,12 +79,35 @@ namespace CustomMapMarkers
             private static void Postfix() => IsLocalMapActive = false;
         }
 
+        [Harmony12.HarmonyPatch(typeof(GlobalMapLocation), "HandleClick")]
+        internal static class GlobalMapLocation_HandleClick_Patch
+        {
+            private static bool Prefix(GlobalMapLocation __instance)
+            {
+                if (IsShiftPressed)
+                {
+                    CustomGlobalMapLocations.CustomizeGlobalMapLocation(__instance);
+                }
+                // Don't pass the click through to the map if control or shift are pressed
+                return !(IsControlPressed || IsShiftPressed);
+            }
+        }
+
+        [Harmony12.HarmonyPatch(typeof(BlueprintLocation), "GetDescription")]
+        internal static class BlueprintLocation_GetDescription_Patch
+        {
+            private static void Postfix(BlueprintLocation __instance, ref string __result)
+            {
+                __result = ModGlobalMapLocation.GetModifiedDescription(__instance, __result);
+            }
+        }
+
         [Harmony12.HarmonyPatch(typeof(UnityModManager.UI), "Update")]
         internal static class UnityModManager_UI_Update_Patch
         {
             private static void Postfix()
             {
-                if (IsLocalMapActive)
+                if (IsLocalMapActive || Game.Instance.CurrentMode == GameModeType.GlobalMap)
                 {
                     try
                     {
@@ -229,9 +255,25 @@ namespace CustomMapMarkers
             {
                 throw Error("Failed to patch LocalMap.OnHide(), cannot load mod");
             }
+            if (!ApplyPatch(typeof(GlobalMapLocation_HandleClick_Patch), "Global map location click"))
+            {
+                throw Error("Failed to patch GlobalMapLocation.HandleClick(), cannot load mod");
+            }
+            if (!ApplyPatch(typeof(BlueprintLocation_GetDescription_Patch), "Blueprint location description"))
+            {
+                throw Error("Failed to patch BlueprintLocation.GetDescription(), cannot load mod");
+            }
 
-            SafeLoad(CustomMapMarkers.Load, "Map Markers");
+            StartMod();
             return true;
+        }
+
+        static void StartMod()
+        {
+            StateManager.LoadState();
+            SafeLoad(StateManager.Load, "State Manager");
+            SafeLoad(CustomMapMarkers.Load, "Local Map Markers");
+            SafeLoad(CustomGlobalMapLocations.Load, "Global Map Locations");
         }
 
         static bool OnToggle(UnityModManager.ModEntry modEntry, bool value)

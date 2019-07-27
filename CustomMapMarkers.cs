@@ -16,7 +16,7 @@ using UnityEngine.EventSystems;
 
 namespace CustomMapMarkers
 {
-    class CustomMapMarkers : ISceneHandler, IWarningNotificationUIHandler
+    class CustomMapMarkers : ISceneHandler
     {
         private static Dictionary<string, List<ModMapMarker>> AreaMarkers { get { return StateManager.CurrentState.AreaMarkers; } }
         private static bool HasRunOnce = false;
@@ -24,7 +24,6 @@ namespace CustomMapMarkers
         internal static void Load()
         {
             EventBus.Subscribe(new CustomMapMarkers());
-            StateManager.LoadState();
         }
 
         internal static void FirstTimeShowLocalMap()
@@ -102,20 +101,6 @@ namespace CustomMapMarkers
             StateManager.SaveState();
             RemoveMarkersFromLocalMap();
         }
-
-        void IWarningNotificationUIHandler.HandleWarning(WarningNotificationType warningType, bool addToLog)
-        {
-            switch (warningType)
-            {
-                case WarningNotificationType.GameSaved:
-                case WarningNotificationType.GameSavedAuto:
-                case WarningNotificationType.GameSavedQuick:
-                    StateManager.SaveState();
-                    break;
-            }
-        }
-
-        void IWarningNotificationUIHandler.HandleWarning(string text, bool addToLog) { }
     }
 
     [DataContract]

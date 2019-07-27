@@ -7,11 +7,13 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
+using Kingmaker.PubSubSystem;
+using Kingmaker.UI;
 using Kingmaker.Utility;
 
 namespace CustomMapMarkers
 {
-    class StateManager
+    class StateManager : IWarningNotificationUIHandler
     {
         [DataContract]
         public class SavedState
@@ -21,16 +23,20 @@ namespace CustomMapMarkers
             [DataMember(Order=2)]
             public uint MarkerNumber = 1;       // Used in creating marker names
             [DataMember(Order=100)]
+            public HashSet<ModGlobalMapLocation> GlobalMapLocations { get; private set; }
+            [DataMember(Order=101)]
             public Dictionary<string, List<ModMapMarker>> AreaMarkers { get; private set; }
 
             public SavedState()
             {
+                GlobalMapLocations = new HashSet<ModGlobalMapLocation>();
                 AreaMarkers = new Dictionary<string, List<ModMapMarker>>();
             }
 
-            public SavedState(Dictionary<string, List<ModMapMarker>> markers)
+            public void ValidateAfterLoad()
             {
-                AreaMarkers = markers;
+                if (GlobalMapLocations == null) { GlobalMapLocations = new HashSet<ModGlobalMapLocation>(); }
+                if (AreaMarkers == null) { AreaMarkers  = new Dictionary<string, List<ModMapMarker>>(); }
             }
 
             public SavedState CleanCopyForSave()
@@ -43,6 +49,11 @@ namespace CustomMapMarkers
 
         public static SavedState CurrentState;
 
+        internal static void Load()
+        {
+            EventBus.Subscribe(new StateManager());
+        }
+
         public static void LoadState()
         {
             string stateFile = Path.Combine(ApplicationPaths.persistentDataPath, GetStateFileName());
@@ -54,6 +65,7 @@ namespace CustomMapMarkers
                     {
                         DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(SavedState));
                         CurrentState = (SavedState)serializer.ReadObject(reader);
+                        CurrentState.ValidateAfterLoad();
                         reader.Close();
                         return;
                     }
@@ -112,6 +124,20 @@ namespace CustomMapMarkers
         {
             return StateFilenameBase + suffix + StateFilenameExt;
         }
+
+        void IWarningNotificationUIHandler.HandleWarning(WarningNotificationType warningType, bool addToLog)
+        {
+            switch (warningType)
+            {
+                case WarningNotificationType.GameSaved:
+                case WarningNotificationType.GameSavedAuto:
+                case WarningNotificationType.GameSavedQuick:
+                    SaveState();
+                    break;
+            }
+        }
+
+        void IWarningNotificationUIHandler.HandleWarning(string text, bool addToLog) { }
     }
 
     class StateHelpers
