@@ -295,6 +295,8 @@ namespace CustomMapMarkers
             return true;
         }
 
+        private static bool editingGlobalMapLocations = true;
+
         static void OnGUI(UnityModManager.ModEntry modEntry)
         {
             if (!enabled) return;
@@ -327,7 +329,20 @@ namespace CustomMapMarkers
             GUILayout.EndVertical();
 #endif
 
-            CustomMapMarkersMenu.Layout();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("<b><color=cyan>Edit: </color></b>", fixedWidth);
+            bool doEditLocalMap = GUILayout.Toggle(!editingGlobalMapLocations, "<b><color=cyan>Local Map Areas</color></b>", fixedWidth);
+            editingGlobalMapLocations = GUILayout.Toggle(!doEditLocalMap, "<b><color=cyan>Global Map Locations</color></b>", fixedWidth);
+            GUILayout.EndHorizontal();
+
+            if (editingGlobalMapLocations)
+            {
+                CustomGlobalMapLocationsMenu.Layout();
+            }
+            else
+            {
+                CustomMapMarkersMenu.Layout();
+            }
         }
 
         static void OnSaveGUI(UnityModManager.ModEntry modEntry)
