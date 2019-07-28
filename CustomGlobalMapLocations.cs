@@ -4,10 +4,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using Kingmaker;
 using Kingmaker.GameModes;
 using Kingmaker.Globalmap;
 using Kingmaker.Globalmap.Blueprints;
 using Kingmaker.PubSubSystem;
+using Kingmaker.UI;
 using UnityEngine;
 
 namespace CustomMapMarkers
@@ -25,6 +27,7 @@ namespace CustomMapMarkers
             if (mapLocation != null)
             {
                 mapLocation.UpdateGlobalMapLocation();
+                Game.Instance.UI.Common.UISound.Play(UISoundType.ButtonClick);
             }
             else
             {
