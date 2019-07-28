@@ -50,6 +50,7 @@ namespace CustomMapMarkers
 
         internal static void PostHandleHoverchange(GlobalMapLocation location, bool isHover)
         {
+            // The hover ring is our highlight so reinstate it when the mouse moves out of the location
             if (!isHover)
             {
                 var mapLocation = ModGlobalMapLocation.FindByAssetGuid(location.Blueprint.AssetGuid);
@@ -65,20 +66,18 @@ namespace CustomMapMarkers
     class ModGlobalMapLocation
 	{
         private static HashSet<ModGlobalMapLocation> GlobalMapLocations { get { return StateManager.CurrentState.GlobalMapLocations; } }
-        public static bool IsInitialized { get; private set; } = false;
+        public static bool IsGlobalMapInitialized { get; private set; } = false;
 
         [DataMember]
-        public string Description { get; set; }
+        public string Notes { get; set; }
         [DataMember]
-        public Color CurrentColor { get; set; }
+        public Color Color { get; set; }
         [DataMember]
         public bool IsVisible { get; set; }
         [DataMember]
         private string AssetGuid;
 
         private GlobalMapLocation mapLocation;
-        private string originalDescription;
-        private Color originalColor;
         public bool IsDeleted = false;
         public bool IsBeingDeleted = false;
 
@@ -88,11 +87,9 @@ namespace CustomMapMarkers
         {
             this.mapLocation         = location;
             this.AssetGuid           = location.Blueprint.AssetGuid;
-            this.originalDescription = location.Blueprint.Description;
-            this.originalColor       = location.HoverColor;
 
-            this.Description = $"Custom Global Map Location #{StateManager.CurrentState.MarkerNumber++}";
-            this.CurrentColor = Color.green;
+            this.Notes = $"Custom Global Map Location #{StateManager.CurrentState.MarkerNumber++}";
+            this.Color = Color.yellow;
             this.IsVisible = true;
 
             GlobalMapLocations.Add(this);
@@ -124,7 +121,7 @@ namespace CustomMapMarkers
             ModGlobalMapLocation mapLocation = GlobalMapLocations.FirstOrDefault(location => location.AssetGuid == bpLocation.AssetGuid);
             if (mapLocation != null)
             {
-                return result + "\n\n" + $"<b>Notes\n</b> <i>{mapLocation.Description}</i>";
+                return result + "\n\n" + $"<b>Notes\n</b> <i>{mapLocation.Notes}</i>";
             }
             else
             {
@@ -147,13 +144,11 @@ namespace CustomMapMarkers
                     Log.Error($"Cannot find GlobalMapLocation for assetGuid=[{this.AssetGuid}]");
                     return false;
                 }
-                this.originalDescription = mapLocation.Blueprint.Description;
-                this.originalColor = mapLocation.CurrentColor;
             }
 
             if (this.IsVisible)
             {
-                this.mapLocation.HoverColor = this.CurrentColor;
+                this.mapLocation.HoverColor = this.Color;
                 this.mapLocation.OverrideHCol = true;
             }
 
@@ -174,7 +169,7 @@ namespace CustomMapMarkers
                     Log.Error($"Malformed location=[{location.AssetGuid}]");
                 }
             }
-            IsInitialized = true;
+            IsGlobalMapInitialized = true;
         }
     }
 
@@ -188,7 +183,7 @@ namespace CustomMapMarkers
         {
             var fixedWidth = new GUILayoutOption[1] { GUILayout.ExpandWidth(false) };
 
-            if (!ModGlobalMapLocation.IsInitialized)
+            if (!ModGlobalMapLocation.IsGlobalMapInitialized)
             {
                 GUILayout.Label("<b><color=red>Location names are unavailable until the global map is first used.</color></b>", fixedWidth);
             }
@@ -201,22 +196,22 @@ namespace CustomMapMarkers
 
                 GUILayout.Space(10f);
 
-                string locationLabel = $"{locationNumber++}: {(ModGlobalMapLocation.IsInitialized ? location.Name : location.Description)}";
+                string locationLabel = $"{locationNumber++}: {(ModGlobalMapLocation.IsGlobalMapInitialized ? location.Name : location.Notes)}";
                 if (location.IsVisible) { locationLabel = $"<color=#1aff1a><b>{locationLabel}</b></color>"; }
                 GUILayout.Label(locationLabel, fixedWidth);
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Label("Description: ", fixedWidth);
-                location.Description = GUILayout.TextArea(location.Description, GUILayout.MaxWidth(250f));
+                GUILayout.Label("Notes: ", fixedWidth);
+                location.Notes = GUILayout.TextArea(location.Notes, GUILayout.MaxWidth(250f));
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Type: ", fixedWidth);
                 for (int i = 0; i < ColorNames.Length; i++)
                 {
-                    if (GUILayout.Toggle(location.CurrentColor == Colors[i], ColorNames[i], fixedWidth))
+                    if (GUILayout.Toggle(location.Color == Colors[i], ColorNames[i], fixedWidth))
                     {
-                        location.CurrentColor = Colors[i];
+                        location.Color = Colors[i];
                     }
                 }
                 GUILayout.EndHorizontal();
