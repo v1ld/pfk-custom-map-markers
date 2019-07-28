@@ -42,7 +42,8 @@ namespace CustomMapMarkers
             public SavedState CleanCopyForSave()
             {
                 var clone = (SavedState)this.MemberwiseClone();
-                clone.AreaMarkers = StateHelpers.PurgeDeletedMarkers(this.AreaMarkers);
+                clone.GlobalMapLocations = StateHelpers.PurgeDeletedGlobalMapLocations(this.GlobalMapLocations);
+                clone.AreaMarkers = StateHelpers.PurgeDeletedAreaMarkers(this.AreaMarkers);
                 return clone;
             }
         }
@@ -142,7 +143,7 @@ namespace CustomMapMarkers
 
     class StateHelpers
     {
-        public static Dictionary<string, List<ModMapMarker>> PurgeDeletedMarkers(Dictionary<string, List<ModMapMarker>> oldMarkers)
+        public static Dictionary<string, List<ModMapMarker>> PurgeDeletedAreaMarkers(Dictionary<string, List<ModMapMarker>> oldMarkers)
         {
             Dictionary<string, List<ModMapMarker>> newMarkers = new Dictionary<string, List<ModMapMarker>>();
             foreach (var area in oldMarkers.Keys)
@@ -161,6 +162,22 @@ namespace CustomMapMarkers
                 }
             }
             return newMarkers;
+        }
+
+        internal static HashSet<ModGlobalMapLocation> PurgeDeletedGlobalMapLocations(HashSet<ModGlobalMapLocation> oldLocations)
+        {
+            HashSet<ModGlobalMapLocation> newLocations;
+            if (oldLocations.Any(location => location.IsDeleted))
+            {
+
+                newLocations = new HashSet<ModGlobalMapLocation>(oldLocations.Where(location => !location.IsDeleted));
+            }
+            else
+            {
+                newLocations = oldLocations;
+            }
+
+            return newLocations;
         }
     }
 }
