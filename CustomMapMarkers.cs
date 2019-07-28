@@ -16,7 +16,7 @@ using UnityEngine.EventSystems;
 
 namespace CustomMapMarkers
 {
-    class CustomMapMarkers : ISceneHandler
+    class CustomMapMarkers
     {
         private static Dictionary<string, List<ModMapMarker>> AreaMarkers { get { return StateManager.CurrentState.AreaMarkers; } }
         private static bool HasRunOnce = false;
@@ -90,17 +90,6 @@ namespace CustomMapMarkers
                 }
             }
         }
-
-        void ISceneHandler.OnAreaDidLoad()
-        {
-            AddMarkerstoLocalMap();
-        }
-
-        void ISceneHandler.OnAreaBeginUnloading()
-        {
-            StateManager.SaveState();
-            RemoveMarkersFromLocalMap();
-        }
     }
 
     [DataContract]
@@ -156,10 +145,10 @@ namespace CustomMapMarkers
             string[] areaNames = AreaMarkers.Keys.ToArray();
             Array.Sort(areaNames);
 
-            GUILayout.Label("<b>Select area</b>", fixedWidth);
+            GUILayout.Label("<b><color=cyan>Select area</color></b>", fixedWidth);
             lastAreaMenu = GUILayout.SelectionGrid(lastAreaMenu, areaNames, 10, fixedWidth);
             GUILayout.Space(10f);
-            GUILayout.Label($"<b>{areaNames[lastAreaMenu]}</b>", fixedWidth);
+            GUILayout.Label($"<b><color=cyan>{areaNames[lastAreaMenu]}</color></b>", fixedWidth);
             LayoutMarkersForArea(areaNames[lastAreaMenu]);
         }
 

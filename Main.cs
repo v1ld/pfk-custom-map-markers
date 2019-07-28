@@ -283,7 +283,6 @@ namespace CustomMapMarkers
 
         static void StartMod()
         {
-            StateManager.LoadState();
             SafeLoad(StateManager.Load, "State Manager");
             SafeLoad(CustomMapMarkers.Load, "Local Map Markers");
             SafeLoad(CustomGlobalMapLocations.Load, "Global Map Locations");
@@ -305,20 +304,20 @@ namespace CustomMapMarkers
             if (failedPatches.Count > 0)
             {
                 GUILayout.BeginVertical();
-                GUILayout.Label("<b>Error: Some patches failed to apply. These features may not work:</b>", fixedWidth);
+                GUILayout.Label("<b><color=#ff5454>Error: Some patches failed to apply. These features may not work:</color></b>", fixedWidth);
                 foreach (var featureName in failedPatches)
                 {
-                    GUILayout.Label($"  • <b>{featureName}</b>", fixedWidth);
+                    GUILayout.Label($"  • <b><color=#ff5454>{featureName}</b>", fixedWidth);
                 }
                 GUILayout.EndVertical();
             }
             if (failedLoading.Count > 0)
             {
                 GUILayout.BeginVertical();
-                GUILayout.Label("<b>Error: Some assets failed to load. Saves using these features won't work:</b>", fixedWidth);
+                GUILayout.Label("<b><color=#ff5454>Error: Some assets failed to load. Saves using these features won't work:</color></b>", fixedWidth);
                 foreach (var featureName in failedLoading)
                 {
-                    GUILayout.Label($"  • <b>{featureName}</b>", fixedWidth);
+                    GUILayout.Label($"  • <b><color=#ff5454>{featureName}</color></b>", fixedWidth);
                 }
                 GUILayout.EndVertical();
             }
@@ -328,6 +327,13 @@ namespace CustomMapMarkers
             GUILayout.Space(10f);
             GUILayout.EndVertical();
 #endif
+
+            string gameCharacterName = Game.Instance.Player.MainCharacter.Value?.CharacterName;
+            if (gameCharacterName == null || gameCharacterName.Length == 0)
+            {
+                GUILayout.Label("<b><color=#ff5454>Load a save to edit map notes and markers.</color></b>", fixedWidth);
+                return;
+            }
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("<b><color=cyan>Edit: </color></b>", fixedWidth);

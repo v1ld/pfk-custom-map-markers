@@ -45,10 +45,6 @@ namespace CustomMapMarkers
 
         void IGameModeHandler.OnGameModeStop(GameModeType gameMode)
         {
-            if (gameMode == GameModeType.GlobalMap)
-            {
-                StateManager.SaveState();
-            }
         }
 
         internal static void PostHandleHoverchange(GlobalMapLocation location, bool isHover)
@@ -174,10 +170,6 @@ namespace CustomMapMarkers
         {
             var fixedWidth = new GUILayoutOption[1] { GUILayout.ExpandWidth(false) };
 
-            if (!ModGlobalMapLocation.IsGlobalMapInitialized)
-            {
-                GUILayout.Label("<b><color=red>Location names are unavailable until the global map is first used.</color></b>", fixedWidth);
-            }
             GUILayout.Label("<b><color=cyan>Descriptions can have multiple lines and paragraphs.</color></b>", fixedWidth);
 
             uint locationNumber = 1;
