@@ -53,11 +53,7 @@ namespace CustomMapMarkers
             // The hover ring is our highlight so reinstate it when the mouse moves out of the location
             if (!isHover)
             {
-                var mapLocation = ModGlobalMapLocation.FindByAssetGuid(location.Blueprint.AssetGuid);
-                if (mapLocation != null && !mapLocation.IsDeleted && mapLocation.IsVisible)
-                {
-                    mapLocation.UpdateGlobalMapLocation();
-                }
+                ModGlobalMapLocation.FindByAssetGuid(location.Blueprint.AssetGuid)?.UpdateGlobalMapLocation();
             }
         }
     }
@@ -89,7 +85,7 @@ namespace CustomMapMarkers
             this.AssetGuid           = location.Blueprint.AssetGuid;
 
             this.Notes = $"Custom Global Map Location #{StateManager.CurrentState.MarkerNumber++}";
-            this.Color = Color.yellow;
+            this.Color = Color.green;
             this.IsVisible = true;
 
             GlobalMapLocations.Add(this);
@@ -119,7 +115,7 @@ namespace CustomMapMarkers
         internal static string GetModifiedDescription(BlueprintLocation bpLocation, string result)
         {
             ModGlobalMapLocation mapLocation = GlobalMapLocations.FirstOrDefault(location => location.AssetGuid == bpLocation.AssetGuid);
-            if (mapLocation != null)
+            if (mapLocation != null && !mapLocation.IsDeleted && mapLocation.IsVisible)
             {
                 return result + "\n\n" + $"<b>Notes\n</b> <i>{mapLocation.Notes}</i>";
             }
@@ -131,11 +127,6 @@ namespace CustomMapMarkers
 
         public bool UpdateGlobalMapLocation()
         {
-            if (this.IsDeleted)
-            {
-                return true;
-            }
-
             if (this.mapLocation == null)
             {
                 this.mapLocation = GlobalMapLocation.Instances.FirstOrDefault(map => map.Blueprint.AssetGuid == this.AssetGuid);
@@ -146,11 +137,8 @@ namespace CustomMapMarkers
                 }
             }
 
-            if (this.IsVisible)
-            {
-                this.mapLocation.HoverColor = this.Color;
-                this.mapLocation.OverrideHCol = true;
-            }
+            this.mapLocation.HoverColor = this.IsVisible ? this.Color : this.mapLocation.CurrentColor;
+            this.mapLocation.OverrideHCol = this.IsVisible;
 
             // Don't have a direct way to set a highlight color on the map icon,
             // so fake it by marking customized locations as being hovered.
@@ -192,6 +180,8 @@ namespace CustomMapMarkers
             uint locationNumber = 1;
             foreach (var location in GlobalMapLocations)
             {
+                bool recordWasChanged = false;
+
                 if (location.IsDeleted) { continue; }
 
                 GUILayout.Space(10f);
@@ -206,12 +196,13 @@ namespace CustomMapMarkers
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Label("Type: ", fixedWidth);
+                GUILayout.Label("Color: ", fixedWidth);
                 for (int i = 0; i < ColorNames.Length; i++)
                 {
                     if (GUILayout.Toggle(location.Color == Colors[i], ColorNames[i], fixedWidth))
                     {
                         location.Color = Colors[i];
+                        recordWasChanged = true;
                     }
                 }
                 GUILayout.EndHorizontal();
@@ -220,6 +211,7 @@ namespace CustomMapMarkers
                 if (GUILayout.Button(location.IsVisible ? "Hide" : "Show", fixedWidth))
                 {
                     location.IsVisible = !location.IsVisible;
+                    recordWasChanged = true;
                 }
                 if (!location.IsBeingDeleted && GUILayout.Button("Delete", fixedWidth))
                 {
@@ -232,6 +224,7 @@ namespace CustomMapMarkers
                     {
                         location.IsDeleted = true;
                         location.IsVisible = false;
+                        recordWasChanged = true;
                     }
                     if (GUILayout.Button("No", fixedWidth))
                     {
@@ -240,6 +233,10 @@ namespace CustomMapMarkers
                 }
                 GUILayout.EndHorizontal();
 
+                if (recordWasChanged)
+                {
+                    location.UpdateGlobalMapLocation();
+                }
             }
         }
     }
