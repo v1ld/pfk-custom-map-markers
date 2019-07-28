@@ -1,7 +1,7 @@
 Custom Map Markers
 ===
 
-Shift + Left click on the local map to add your own custom map markers.  Markers may be edited (name & icon type), hidden temporarily or deleted permanently from the options menu.  The custom markers do not touch your game saves and the mod may be uninstalled safely at any point.
+Shift + Left click on the local or global map to add your own custom map markers.  Markers may be edited (name & icon type), hidden temporarily or deleted permanently from the options menu.  The custom markers do not touch your game saves and the mod may be uninstalled safely at any point.
 
 Installation
 ----
