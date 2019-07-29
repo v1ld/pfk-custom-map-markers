@@ -61,8 +61,9 @@ namespace CustomMapMarkers
     class ModGlobalMapLocation
 	{
         private static HashSet<ModGlobalMapLocation> GlobalMapLocations { get { return StateManager.CurrentState.GlobalMapLocations; } }
-        public static bool IsGlobalMapInitialized { get; private set; } = false;
 
+        [DataMember]
+        public string Name { get; set; }
         [DataMember]
         public string Notes { get; set; }
         [DataMember]
@@ -76,14 +77,13 @@ namespace CustomMapMarkers
         public bool IsDeleted = false;
         public bool IsBeingDeleted = false;
 
-        public string Name { get { return mapLocation.Blueprint.GetName(false); } }
-
         private ModGlobalMapLocation(GlobalMapLocation location)
         {
             this.mapLocation         = location;
             this.AssetGuid           = location.Blueprint.AssetGuid;
 
-            this.Notes = $"Custom Global Map Location #{StateManager.CurrentState.MarkerNumber++}";
+            this.Name = mapLocation.Blueprint.GetName(false);
+            this.Notes = $"Custom location #{StateManager.CurrentState.MarkerNumber++}";
             this.Color = Color.green;
             this.IsVisible = true;
 
@@ -135,6 +135,10 @@ namespace CustomMapMarkers
                     return false;
                 }
             }
+            if (this.Name == null)
+            {
+                this.Name = mapLocation.Blueprint.GetName(false);
+            }
 
             this.mapLocation.HoverColor = this.IsVisible ? this.Color : this.mapLocation.CurrentColor;
             this.mapLocation.OverrideHCol = this.IsVisible;
@@ -156,7 +160,6 @@ namespace CustomMapMarkers
                     Log.Error($"Malformed location=[{location.AssetGuid}]");
                 }
             }
-            IsGlobalMapInitialized = true;
         }
     }
 
@@ -175,13 +178,11 @@ namespace CustomMapMarkers
             uint locationNumber = 1;
             foreach (var location in GlobalMapLocations)
             {
-                bool recordWasChanged = false;
-
                 if (location.IsDeleted) { continue; }
 
                 GUILayout.Space(10f);
 
-                string locationLabel = $"{locationNumber++}: {(ModGlobalMapLocation.IsGlobalMapInitialized ? location.Name : location.Notes)}";
+                string locationLabel = $"{locationNumber++}: { location.Name ?? location.Notes }";
                 if (location.IsVisible) { locationLabel = $"<color=#1aff1a><b>{locationLabel}</b></color>"; }
                 GUILayout.Label(locationLabel, fixedWidth);
 
@@ -197,7 +198,6 @@ namespace CustomMapMarkers
                     if (GUILayout.Toggle(location.Color == Colors[i], ColorNames[i], fixedWidth))
                     {
                         location.Color = Colors[i];
-                        recordWasChanged = true;
                     }
                 }
                 GUILayout.EndHorizontal();
@@ -206,7 +206,6 @@ namespace CustomMapMarkers
                 if (GUILayout.Button(location.IsVisible ? "Hide" : "Show", fixedWidth))
                 {
                     location.IsVisible = !location.IsVisible;
-                    recordWasChanged = true;
                 }
                 if (!location.IsBeingDeleted && GUILayout.Button("Delete", fixedWidth))
                 {
@@ -219,7 +218,6 @@ namespace CustomMapMarkers
                     {
                         location.IsDeleted = true;
                         location.IsVisible = false;
-                        recordWasChanged = true;
                     }
                     if (GUILayout.Button("No", fixedWidth))
                     {
@@ -227,11 +225,6 @@ namespace CustomMapMarkers
                     }
                 }
                 GUILayout.EndHorizontal();
-
-                if (recordWasChanged)
-                {
-                    location.UpdateGlobalMapLocation();
-                }
             }
         }
     }

@@ -19,18 +19,15 @@ namespace CustomMapMarkers
     class CustomMapMarkers
     {
         private static Dictionary<string, List<ModMapMarker>> AreaMarkers { get { return StateManager.CurrentState.AreaMarkers; } }
-        private static bool HasRunOnce = false;
 
         internal static void Load()
         {
             EventBus.Subscribe(new CustomMapMarkers());
         }
 
-        internal static void FirstTimeShowLocalMap()
+        internal static void OnShowLocalMap()
         {
-            if (HasRunOnce) { return; }
             AddMarkerstoLocalMap();
-            HasRunOnce = true;
         }
 
         private static FastInvoke LocalMap_Set = Helpers.CreateInvoker<LocalMap>("Set");
@@ -67,15 +64,31 @@ namespace CustomMapMarkers
 
         internal static void AddMarkerstoLocalMap()
         {
+            if (StateManager.CurrentState.IsLocalMapInitialized) { return; }
+
+#if DEBUG
+            foreach (var marker in LocalMap.Markers)
+            {
+                if (marker is ModMapMarker)
+                {
+                    Log.Write($"AddMarkerstoLocalMap: ModMapMarker present before add! marker=[{((ModMapMarker)marker).Description}]");
+                    // LocalMap.Markers.Remove(marker);
+                }
+            }
+#endif
+
             string areaName = Game.Instance.CurrentlyLoadedArea.AreaDisplayName;
             List<ModMapMarker> markers;
             if (AreaMarkers.TryGetValue(areaName, out markers))
             {
                 foreach (var marker in markers)
                 {
+                    Log.Write($"AddMarkerstoLocalMap: marker=[{marker.Description}]");
                     LocalMap.Markers.Add(marker);
                 }
             }
+
+            StateManager.CurrentState.IsLocalMapInitialized = true;
         }
 
         internal static void RemoveMarkersFromLocalMap()
@@ -86,9 +99,12 @@ namespace CustomMapMarkers
             {
                 foreach (var marker in markers)
                 {
+                    Log.Write($"RemoveMarkersFromLocalMap: marker=[{((ModMapMarker)marker).Description}]");
                     LocalMap.Markers.Remove(marker);
                 }
             }
+
+            StateManager.CurrentState.IsLocalMapInitialized = false;
         }
     }
 
@@ -144,6 +160,7 @@ namespace CustomMapMarkers
 
             string[] areaNames = AreaMarkers.Keys.ToArray();
             Array.Sort(areaNames);
+            lastAreaMenu = (lastAreaMenu >= areaNames.Length) ? 0 : lastAreaMenu;
 
             GUILayout.Label("<b><color=cyan>Select area</color></b>", fixedWidth);
             lastAreaMenu = GUILayout.SelectionGrid(lastAreaMenu, areaNames, 10, fixedWidth);

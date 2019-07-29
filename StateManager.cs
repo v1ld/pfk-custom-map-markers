@@ -31,19 +31,22 @@ namespace CustomMapMarkers
             public Dictionary<string, List<ModMapMarker>> AreaMarkers { get; private set; }
 
             public string CharacterName { get; private set; }
+            public bool IsLocalMapInitialized { get; set; } = false;
 
             public SavedState()
             {
                 GlobalMapLocations = new HashSet<ModGlobalMapLocation>();
                 AreaMarkers = new Dictionary<string, List<ModMapMarker>>();
-                SetCharacterName();
+
+                ValidateAfterLoad();
             }
 
             public void ValidateAfterLoad()
             {
                 if (GlobalMapLocations == null) { GlobalMapLocations = new HashSet<ModGlobalMapLocation>(); }
                 if (AreaMarkers == null) { AreaMarkers  = new Dictionary<string, List<ModMapMarker>>(); }
-                SetCharacterName();
+                CharacterName = Game.Instance.Player.MainCharacter.Value?.CharacterName;
+                IsLocalMapInitialized = false;
             }
 
             public SavedState CleanCopyForSave()
@@ -52,11 +55,6 @@ namespace CustomMapMarkers
                 clone.GlobalMapLocations = StateHelpers.PurgeDeletedGlobalMapLocations(this.GlobalMapLocations);
                 clone.AreaMarkers = StateHelpers.PurgeDeletedAreaMarkers(this.AreaMarkers);
                 return clone;
-            }
-
-            private void SetCharacterName()
-            {
-                CharacterName = Game.Instance.Player.MainCharacter.Value?.CharacterName;
             }
         }
 
@@ -184,7 +182,6 @@ namespace CustomMapMarkers
             {
                 LoadState();
             }
-            CustomMapMarkers.AddMarkerstoLocalMap();
         }
 
         void ISceneHandler.OnAreaBeginUnloading()

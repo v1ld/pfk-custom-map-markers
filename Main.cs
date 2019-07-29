@@ -67,8 +67,7 @@ namespace CustomMapMarkers
             private static bool Prefix(LocalMap __instance)
             {
                 IsLocalMapActive = true;
-                // LocalMap.Markers is loaded late, run a one time setup on first map show
-                CustomMapMarkers.FirstTimeShowLocalMap();
+                CustomMapMarkers.OnShowLocalMap();
                 return true;
             }
         }
@@ -76,7 +75,10 @@ namespace CustomMapMarkers
         [Harmony12.HarmonyPatch(typeof(LocalMap), "OnHide")]
         internal static class LocalMap_OnHide_Patch
         {
-            private static void Postfix() => IsLocalMapActive = false;
+            private static void Postfix()
+            {
+                IsLocalMapActive = false;
+            }
         }
 
         [Harmony12.HarmonyPatch(typeof(GlobalMapLocation), "HandleClick")]
