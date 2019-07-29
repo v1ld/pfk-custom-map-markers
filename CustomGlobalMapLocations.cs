@@ -188,7 +188,7 @@ namespace CustomMapMarkers
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Notes: ", fixedWidth);
-                location.Notes = GUILayout.TextArea(location.Notes, GUILayout.MaxWidth(250f));
+                location.Notes = GUILayout.TextArea(location.Notes, GUILayout.MaxWidth(500f));
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();

@@ -163,7 +163,7 @@ namespace CustomMapMarkers
             lastAreaMenu = (lastAreaMenu >= areaNames.Length) ? 0 : lastAreaMenu;
 
             GUILayout.Label("<b><color=cyan>Select area</color></b>", fixedWidth);
-            lastAreaMenu = GUILayout.SelectionGrid(lastAreaMenu, areaNames, 10, fixedWidth);
+            lastAreaMenu = GUILayout.SelectionGrid(lastAreaMenu, areaNames, 5, fixedWidth);
             GUILayout.Space(10f);
             GUILayout.Label($"<b><color=cyan>{areaNames[lastAreaMenu]}</color></b>", fixedWidth);
             LayoutMarkersForArea(areaNames[lastAreaMenu]);
@@ -186,7 +186,7 @@ namespace CustomMapMarkers
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Description: ", fixedWidth);
-                marker.Description = GUILayout.TextField(marker.Description, GUILayout.MaxWidth(250f));
+                marker.Description = GUILayout.TextField(marker.Description, GUILayout.MaxWidth(500f));
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
