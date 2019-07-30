@@ -32,7 +32,7 @@ namespace CustomMapMarkers
 
         private static FastInvoke LocalMap_Set = Helpers.CreateInvoker<LocalMap>("Set");
 
-        public static void CreateMarker(LocalMap map, PointerEventData eventData)
+        internal static void CreateMarker(LocalMap map, PointerEventData eventData)
         {
             ModMapMarker marker = NewMarker(map, eventData);
             LocalMap.Markers.Add(marker);
@@ -112,18 +112,18 @@ namespace CustomMapMarkers
     class ModMapMarker :  ILocalMapMarker
 	{
         [DataMember]
-        public string Description { get; set; }
+        internal string Description;
         [DataMember]
         private SerializableVector3 Position;
         [DataMember]
-        public LocalMap.MarkType Type { get; set; }
+        internal LocalMap.MarkType Type;
         [DataMember]
-        public bool IsVisible { get; set; } = true;
+        internal bool IsVisible = true;
 
-        public bool IsDeleted = false;
-        public bool IsBeingDeleted = false;
+        internal bool IsDeleted = false;
+        internal bool IsBeingDeleted = false;
 
-        public ModMapMarker(Vector3 position)
+        internal ModMapMarker(Vector3 position)
         {
             Description = $"Custom marker #{StateManager.CurrentState.MarkerNumber++}";
             Position = position;
@@ -145,9 +145,10 @@ namespace CustomMapMarkers
 
     class CustomMapMarkersMenu {
         private static Dictionary<string, List<ModMapMarker>> AreaMarkers { get { return StateManager.CurrentState.AreaMarkers; } }
-        internal static int lastAreaMenu = 0;
+        private static int lastAreaMenu = 0;
         private static string[] MarkTypeNames = { "Point of Interest", "Very Important Thing", "Loot", "Exit" };
         private static LocalMap.MarkType[] MarkTypes = { LocalMap.MarkType.Poi, LocalMap.MarkType.VeryImportantThing, LocalMap.MarkType.Loot, LocalMap.MarkType.Exit };
+
 
         internal static void Layout()
         {

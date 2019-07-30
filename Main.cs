@@ -44,7 +44,7 @@ namespace CustomMapMarkers
         }
 
         [Harmony12.HarmonyPatch(typeof(LocalMap), "OnPointerClick")]
-        internal static class LocalMap_OnPointerClick_Patch
+        static class LocalMap_OnPointerClick_Patch
         {
             private static bool Prefix(LocalMap __instance, PointerEventData eventData)
             {
@@ -62,7 +62,7 @@ namespace CustomMapMarkers
         }
 
         [Harmony12.HarmonyPatch(typeof(LocalMap), "OnShow")]
-        internal static class LocalMap_OnShow_Patch
+        static class LocalMap_OnShow_Patch
         {
             private static bool Prefix(LocalMap __instance)
             {
@@ -73,7 +73,7 @@ namespace CustomMapMarkers
         }
 
         [Harmony12.HarmonyPatch(typeof(LocalMap), "OnHide")]
-        internal static class LocalMap_OnHide_Patch
+        static class LocalMap_OnHide_Patch
         {
             private static void Postfix()
             {
@@ -82,7 +82,7 @@ namespace CustomMapMarkers
         }
 
         [Harmony12.HarmonyPatch(typeof(GlobalMapLocation), "HandleClick")]
-        internal static class GlobalMapLocation_HandleClick_Patch
+        static class GlobalMapLocation_HandleClick_Patch
         {
             private static bool Prefix(GlobalMapLocation __instance)
             {
@@ -96,7 +96,7 @@ namespace CustomMapMarkers
         }
 
         [Harmony12.HarmonyPatch(typeof(GlobalMapLocation), "HandleHoverChange")]
-        internal static class GlobalMapLocation_HandleHoverChange_Patch
+        static class GlobalMapLocation_HandleHoverChange_Patch
         {
             private static void Postfix(GlobalMapLocation __instance, bool isHover)
             {
@@ -105,7 +105,7 @@ namespace CustomMapMarkers
         }
 
         [Harmony12.HarmonyPatch(typeof(BlueprintLocation), "GetDescription")]
-        internal static class BlueprintLocation_GetDescription_Patch
+        static class BlueprintLocation_GetDescription_Patch
         {
             private static void Postfix(BlueprintLocation __instance, ref string __result)
             {
@@ -114,7 +114,7 @@ namespace CustomMapMarkers
         }
 
         [Harmony12.HarmonyPatch(typeof(UnityModManager.UI), "Update")]
-        internal static class UnityModManager_UI_Update_Patch
+        static class UnityModManager_UI_Update_Patch
         {
             private static void Postfix()
             {
@@ -133,17 +133,17 @@ namespace CustomMapMarkers
             }
         }
 
-        internal static bool IsLocalMapActive = false;
-        internal static bool IsControlPressed = false;
-        internal static bool IsShiftPressed   = false;
+        private static bool IsLocalMapActive = false;
+        private static bool IsControlPressed = false;
+        private static bool IsShiftPressed   = false;
 
-        internal static LibraryScriptableObject library;
+        static LibraryScriptableObject library;
 
         public static bool enabled;
 
         public static UnityModManager.ModEntry.ModLogger logger;
 
-        internal static Settings settings;
+        static Settings settings;
 
         static Harmony12.HarmonyInstance harmonyInstance;
 
@@ -173,7 +173,7 @@ namespace CustomMapMarkers
             UberLogger.Logger.Enabled = true;
         }
 
-        public static void NotifyPlayer(string message, bool warning = false)
+        internal static void NotifyPlayer(string message, bool warning = false)
         {
             if (warning)
             {
@@ -189,7 +189,7 @@ namespace CustomMapMarkers
         //
         // Also, in general the return value should be ignored. If a patch fails, we still want to create
         // blueprints, otherwise the save won't load. Better to have something be non-functional.
-        internal static bool ApplyPatch(Type type, String featureName)
+        static bool ApplyPatch(Type type, String featureName)
         {
             try
             {
@@ -359,7 +359,7 @@ namespace CustomMapMarkers
             StateManager.SaveState();
         }
 
-        internal static void SafeLoad(Action load, String name)
+        static void SafeLoad(Action load, String name)
         {
             try
             {
@@ -372,7 +372,7 @@ namespace CustomMapMarkers
             }
         }
 
-        internal static T SafeLoad<T>(Func<T> load, String name)
+        static T SafeLoad<T>(Func<T> load, String name)
         {
             try
             {
@@ -386,7 +386,7 @@ namespace CustomMapMarkers
             }
         }
 
-        internal static Exception Error(String message)
+        static Exception Error(String message)
         {
             logger?.Log(message);
             return new InvalidOperationException(message);

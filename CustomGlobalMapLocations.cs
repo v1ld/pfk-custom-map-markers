@@ -63,24 +63,24 @@ namespace CustomMapMarkers
         private static HashSet<ModGlobalMapLocation> GlobalMapLocations { get { return StateManager.CurrentState.GlobalMapLocations; } }
 
         [DataMember]
-        public string Name { get; set; }
+        internal string Name;
         [DataMember]
-        public string Notes { get; set; }
+        internal string Notes;
         [DataMember]
-        public Color Color { get; set; }
+        internal Color Color;
         [DataMember]
-        public bool IsVisible { get; set; }
+        internal bool IsVisible;
         [DataMember]
         private string AssetGuid;
 
         private GlobalMapLocation mapLocation;
-        public bool IsDeleted = false;
-        public bool IsBeingDeleted = false;
+        internal bool IsDeleted = false;
+        internal bool IsBeingDeleted = false;
 
         private ModGlobalMapLocation(GlobalMapLocation location)
         {
-            this.mapLocation         = location;
-            this.AssetGuid           = location.Blueprint.AssetGuid;
+            this.mapLocation = location;
+            this.AssetGuid = location.Blueprint.AssetGuid;
 
             this.Name = mapLocation.Blueprint.GetName(false);
             this.Notes = $"Custom location #{StateManager.CurrentState.MarkerNumber++}";
@@ -90,7 +90,7 @@ namespace CustomMapMarkers
             GlobalMapLocations.Add(this);
         }
 
-        public static ModGlobalMapLocation FindOrCreateByAssetGuid(string assetGuid)
+        internal static ModGlobalMapLocation FindOrCreateByAssetGuid(string assetGuid)
         {
             var modLocation = GlobalMapLocations.FirstOrDefault(location => location.AssetGuid == assetGuid);
             if (modLocation == null)
@@ -108,7 +108,7 @@ namespace CustomMapMarkers
             return modLocation;
         }
 
-        public static ModGlobalMapLocation FindByAssetGuid(string assetGuid)
+        internal static ModGlobalMapLocation FindByAssetGuid(string assetGuid)
             => GlobalMapLocations.FirstOrDefault(location => location.AssetGuid == assetGuid);
 
         internal static string GetModifiedDescription(BlueprintLocation bpLocation, string result)
@@ -124,7 +124,7 @@ namespace CustomMapMarkers
             }
         }
 
-        public bool UpdateGlobalMapLocation()
+        internal bool UpdateGlobalMapLocation()
         {
             if (this.mapLocation == null)
             {

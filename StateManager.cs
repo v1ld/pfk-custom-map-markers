@@ -19,21 +19,21 @@ namespace CustomMapMarkers
     class StateManager : IWarningNotificationUIHandler, ISceneHandler
     {
         [DataContract]
-        public class SavedState
+        internal class SavedState
         {
             [DataMember(Order=1)]
-            public readonly uint Version = 1;   // Data version for serialization
+            internal readonly uint Version = 1;   // Data version for serialization
             [DataMember(Order=2)]
-            public uint MarkerNumber = 1;       // Used in creating marker names
+            internal uint MarkerNumber = 1;       // Used in creating marker names
             [DataMember(Order=100)]
-            public HashSet<ModGlobalMapLocation> GlobalMapLocations { get; private set; }
+            internal HashSet<ModGlobalMapLocation> GlobalMapLocations { get; private set; }
             [DataMember(Order=101)]
-            public Dictionary<string, List<ModMapMarker>> AreaMarkers { get; private set; }
+            internal Dictionary<string, List<ModMapMarker>> AreaMarkers { get; private set; }
 
-            public string CharacterName { get; private set; }
-            public bool IsLocalMapInitialized { get; set; } = false;
+            internal string CharacterName { get; private set; }
+            internal bool IsLocalMapInitialized = false;
 
-            public SavedState()
+            internal SavedState()
             {
                 GlobalMapLocations = new HashSet<ModGlobalMapLocation>();
                 AreaMarkers = new Dictionary<string, List<ModMapMarker>>();
@@ -41,7 +41,7 @@ namespace CustomMapMarkers
                 ValidateAfterLoad();
             }
 
-            public void ValidateAfterLoad()
+            internal void ValidateAfterLoad()
             {
                 if (GlobalMapLocations == null) { GlobalMapLocations = new HashSet<ModGlobalMapLocation>(); }
                 if (AreaMarkers == null) { AreaMarkers  = new Dictionary<string, List<ModMapMarker>>(); }
@@ -49,7 +49,7 @@ namespace CustomMapMarkers
                 IsLocalMapInitialized = false;
             }
 
-            public SavedState CleanCopyForSave()
+            internal SavedState CleanCopyForSave()
             {
                 var clone = (SavedState)this.MemberwiseClone();
                 clone.GlobalMapLocations = StateHelpers.PurgeDeletedGlobalMapLocations(this.GlobalMapLocations);
@@ -58,14 +58,14 @@ namespace CustomMapMarkers
             }
         }
 
-        public static SavedState CurrentState;
+        internal static SavedState CurrentState;
 
         internal static void Load()
         {
             EventBus.Subscribe(new StateManager());
         }
 
-        public static void LoadState()
+        internal static void LoadState()
         {
             Log.Write($"Load request for current=[{CurrentState?.CharacterName}] game=[{Game.Instance.Player.MainCharacter.Value?.CharacterName}]");
 
@@ -105,7 +105,7 @@ namespace CustomMapMarkers
             CurrentState = new SavedState();
         }
 
-        public static void SaveState()
+        internal static void SaveState()
         {
             Log.Write($"Save request for current=[{CurrentState?.CharacterName}] game=[{Game.Instance.Player.MainCharacter.Value?.CharacterName}]");
 
@@ -230,7 +230,7 @@ namespace CustomMapMarkers
             }
         }
 
-        static private Dictionary<string, string> FileNameForChar = new Dictionary<string, string>();
+        private static Dictionary<string, string> FileNameForChar = new Dictionary<string, string>();
 
         private static string GetCharacterFileName(string prefix)
         {
@@ -256,7 +256,7 @@ namespace CustomMapMarkers
 
     class StateHelpers
     {
-        public static Dictionary<string, List<ModMapMarker>> PurgeDeletedAreaMarkers(Dictionary<string, List<ModMapMarker>> oldMarkers)
+        internal static Dictionary<string, List<ModMapMarker>> PurgeDeletedAreaMarkers(Dictionary<string, List<ModMapMarker>> oldMarkers)
         {
             Dictionary<string, List<ModMapMarker>> newMarkers = new Dictionary<string, List<ModMapMarker>>();
             foreach (var area in oldMarkers.Keys)
