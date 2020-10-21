@@ -35,7 +35,7 @@ namespace CustomMapMarkers
         internal static void CreateMarker(LocalMap map, PointerEventData eventData)
         {
             ModMapMarker marker = NewMarker(map, eventData);
-            LocalMap.Markers.Add(marker);
+            LocalMapModel.Markers.Add(marker);
             LocalMap_Set(map);  // Force a refresh to display the new mark
             Game.Instance.UI.Common.UISound.Play(UISoundType.ButtonClick);
         }
@@ -67,7 +67,7 @@ namespace CustomMapMarkers
             if (StateManager.CurrentState.IsLocalMapInitialized) { return; }
 
 #if DEBUG
-            foreach (var marker in LocalMap.Markers)
+            foreach (var marker in LocalMapModel.Markers)
             {
                 if (marker is ModMapMarker)
                 {
@@ -84,7 +84,7 @@ namespace CustomMapMarkers
                 foreach (var marker in markers)
                 {
                     Log.Write($"AddMarkerstoLocalMap: marker=[{marker.Description}]");
-                    LocalMap.Markers.Add(marker);
+                    LocalMapModel.Markers.Add(marker);
                 }
             }
 
@@ -100,7 +100,7 @@ namespace CustomMapMarkers
                 foreach (var marker in markers)
                 {
                     Log.Write($"RemoveMarkersFromLocalMap: marker=[{((ModMapMarker)marker).Description}]");
-                    LocalMap.Markers.Remove(marker);
+                    LocalMapModel.Markers.Remove(marker);
                 }
             }
 
@@ -215,7 +215,7 @@ namespace CustomMapMarkers
                     GUILayout.Label("Are you sure?", fixedWidth);
                     if (GUILayout.Button("Yes", fixedWidth))
                     {
-                        LocalMap.Markers.Remove(marker);
+                        LocalMapModel.Markers.Remove(marker);
                         marker.IsDeleted = true;
                         marker.IsVisible = false;
                     }
@@ -225,7 +225,7 @@ namespace CustomMapMarkers
                     }
                 }
                 GUILayout.EndHorizontal();
-            }
+            } 
         }
     }
 }
