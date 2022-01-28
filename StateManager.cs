@@ -12,6 +12,7 @@ using Kingmaker;
 using Kingmaker.GameModes;
 using Kingmaker.PubSubSystem;
 using Kingmaker.UI;
+using Kingmaker.UI.ServiceWindow.LocalMap;
 using Kingmaker.Utility;
 
 namespace CustomMapMarkers
