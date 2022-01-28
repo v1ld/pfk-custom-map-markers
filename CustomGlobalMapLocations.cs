@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using HighlightingSystem;
 using Kingmaker;
 using Kingmaker.GameModes;
 using Kingmaker.Globalmap;
@@ -54,6 +55,26 @@ namespace CustomMapMarkers
             {
                 ModGlobalMapLocation.FindByAssetGuid(location.Blueprint.AssetGuid)?.UpdateGlobalMapLocation();
             }
+        }
+
+        internal static void PostUpdateHighlight(GlobalMapLocation location)
+        {
+            ModGlobalMapLocation gL = ModGlobalMapLocation.FindByAssetGuid(location.Blueprint.AssetGuid);
+            if (gL != null && gL.IsVisible && !Helpers.GetField<bool>(location, "m_Hover") && !Helpers.GetField<bool>(location, "m_UiSelected"))
+            {
+#if DEBUG
+                Log.Write($"gL Is Visible and all is fine");
+#endif
+                Highlighter[] highlighters;
+                highlighters = location.GetComponentsInChildren<Highlighter>();
+                for (int i = 0; i < highlighters.Length; i++)
+                {
+                    highlighters[i].ConstantOnImmediate(gL.Color);
+                }
+
+            }
+
+
         }
     }
 
@@ -198,6 +219,7 @@ namespace CustomMapMarkers
                     if (GUILayout.Toggle(location.Color == Colors[i], ColorNames[i], fixedWidth))
                     {
                         location.Color = Colors[i];
+                        location.UpdateGlobalMapLocation();
                     }
                 }
                 GUILayout.EndHorizontal();
@@ -206,6 +228,7 @@ namespace CustomMapMarkers
                 if (GUILayout.Button(location.IsVisible ? "Hide" : "Show", fixedWidth))
                 {
                     location.IsVisible = !location.IsVisible;
+                    location.UpdateGlobalMapLocation();
                 }
                 if (!location.IsBeingDeleted && GUILayout.Button("Delete", fixedWidth))
                 {
@@ -218,6 +241,7 @@ namespace CustomMapMarkers
                     {
                         location.IsDeleted = true;
                         location.IsVisible = false;
+                        location.UpdateGlobalMapLocation();
                     }
                     if (GUILayout.Button("No", fixedWidth))
                     {

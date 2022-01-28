@@ -66,7 +66,8 @@ namespace CustomMapMarkers
         {
             private static bool Prefix(LocalMap __instance)
             {
-                IsLocalMapActive = true;
+                LocalMapRef = __instance;
+                
                 CustomMapMarkers.OnShowLocalMap();
                 return true;
             }
@@ -77,7 +78,7 @@ namespace CustomMapMarkers
         {
             private static void Postfix()
             {
-                IsLocalMapActive = false;
+                LocalMapRef = null;
             }
         }
 
@@ -94,16 +95,24 @@ namespace CustomMapMarkers
                 return !(IsControlPressed || IsShiftPressed);
             }
         }
-
-        [Harmony12.HarmonyPatch(typeof(GlobalMapLocation), "HandleHoverChange")]
-        static class GlobalMapLocation_HandleHoverChange_Patch
+        /*
+                [Harmony12.HarmonyPatch(typeof(GlobalMapLocation), "HandleHoverChange")]
+                static class GlobalMapLocation_HandleHoverChange_Patch
+                {
+                    private static void Postfix(GlobalMapLocation __instance, bool isHover)
+                    {
+                        CustomGlobalMapLocations.PostHandleHoverchange(__instance, isHover);
+                    }
+                }
+        */
+        [Harmony12.HarmonyPatch(typeof(GlobalMapLocation), "UpdateHighlight")]
+        static class GlobalMapLocation_UpdateHighlight_Patch
         {
-            private static void Postfix(GlobalMapLocation __instance, bool isHover)
+            private static void Postfix(GlobalMapLocation __instance)
             {
-                CustomGlobalMapLocations.PostHandleHoverchange(__instance, isHover);
+                CustomGlobalMapLocations.PostUpdateHighlight(__instance);
             }
         }
-
         [Harmony12.HarmonyPatch(typeof(BlueprintLocation), "GetDescription")]
         static class BlueprintLocation_GetDescription_Patch
         {
@@ -133,7 +142,8 @@ namespace CustomMapMarkers
             }
         }
 
-        private static bool IsLocalMapActive = false;
+        private static bool IsLocalMapActive => LocalMapRef != null;
+        internal static LocalMap LocalMapRef;
         private static bool IsControlPressed = false;
         private static bool IsShiftPressed   = false;
 
@@ -270,9 +280,9 @@ namespace CustomMapMarkers
             {
                 throw Error("Failed to patch GlobalMapLocation.HandleClick(), cannot load mod");
             }
-            if (!ApplyPatch(typeof(GlobalMapLocation_HandleHoverChange_Patch), "Global map hover change"))
+            if (!ApplyPatch(typeof(GlobalMapLocation_UpdateHighlight_Patch), "Global map highlight change"))
             {
-                throw Error("Failed to patch GlobalMapLocation.HandleHoverChange(), cannot load mod");
+                throw Error("Failed to patch GlobalMapLocation.UpdateHighlight(), cannot load mod");
             }
             if (!ApplyPatch(typeof(BlueprintLocation_GetDescription_Patch), "Blueprint location description"))
             {

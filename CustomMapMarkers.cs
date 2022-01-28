@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using Harmony12;
 using Kingmaker;
 using Kingmaker.PubSubSystem;
 using Kingmaker.UI;
@@ -65,7 +66,7 @@ namespace CustomMapMarkers
         internal static void AddMarkerstoLocalMap()
         {
             if (StateManager.CurrentState.IsLocalMapInitialized) { return; }
-
+/*
 #if DEBUG
             foreach (var marker in LocalMapModel.Markers)
             {
@@ -76,7 +77,7 @@ namespace CustomMapMarkers
                 }
             }
 #endif
-
+*/
             string areaName = Game.Instance.CurrentlyLoadedArea.AreaDisplayName;
             List<ModMapMarker> markers;
             if (AreaMarkers.TryGetValue(areaName, out markers))
@@ -197,6 +198,11 @@ namespace CustomMapMarkers
                     if (GUILayout.Toggle(marker.Type == MarkTypes[i], MarkTypeNames[i], fixedWidth))
                     {
                         marker.Type = MarkTypes[i];
+                        if(Main.LocalMapRef)
+                        {
+                            Helpers.CreateInvoker<LocalMap>("Update").Invoke(Main.LocalMapRef, null);
+
+                        }
                     }
                 }
                 GUILayout.EndHorizontal();
@@ -205,6 +211,10 @@ namespace CustomMapMarkers
                 if (GUILayout.Button(marker.IsVisible ? "Hide" : "Show", fixedWidth))
                 {
                     marker.IsVisible = !marker.IsVisible;
+                    if (Main.LocalMapRef)
+                    {
+                        Helpers.CreateInvoker<LocalMap>("Update").Invoke(Main.LocalMapRef, null);
+                    }
                 }
                 if (!marker.IsBeingDeleted && GUILayout.Button("Delete", fixedWidth))
                 {
@@ -218,6 +228,10 @@ namespace CustomMapMarkers
                         LocalMapModel.Markers.Remove(marker);
                         marker.IsDeleted = true;
                         marker.IsVisible = false;
+                        if (Main.LocalMapRef)
+                        {
+                            Helpers.CreateInvoker<LocalMap>("Update").Invoke(Main.LocalMapRef, null);
+                        }
                     }
                     if (GUILayout.Button("No", fixedWidth))
                     {
